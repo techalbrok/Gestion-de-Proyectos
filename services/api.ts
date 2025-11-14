@@ -68,7 +68,7 @@ export const fetchUsers = async (): Promise<User[]> => {
     return data;
 };
 export const fetchDepartments = async (): Promise<Department[]> => {
-    const { data, error } = await supabase.from('departments').select('*');
+    const { data, error } = await supabase.from('departments').select('id, name, description, coordinator_id');
     if (error) throw error;
     return data;
 };
