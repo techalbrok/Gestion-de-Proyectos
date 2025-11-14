@@ -77,6 +77,7 @@ const DepartmentProjectsPage: React.FC = () => {
     }
     
     const coordinator = users.find(u => u.id === department.coordinator_id);
+    const coordinator = users.find(u => u.id === department.coordinator);
 
     return (
         <div className="p-6 flex flex-col h-full space-y-6">

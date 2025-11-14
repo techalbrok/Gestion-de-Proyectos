@@ -36,7 +36,7 @@ export interface Department {
   id:string;
   name: string;
   description?: string;
-  coordinator_id?: string;
+  coordinator?: string;
 }
 
 export interface UserDepartment {

@@ -43,7 +43,7 @@ const DepartmentsPage: React.FC = () => {
 
     const departmentData = useMemo(() => {
         return departments.map(dept => {
-            const coordinator = users.find(u => u.id === dept.coordinator_id);
+            const coordinator = users.find(u => u.id === dept.coordinator);
             const memberCount = userDepartments.filter(ud => ud.department_id === dept.id).length;
             return { ...dept, coordinator, memberCount };
         });

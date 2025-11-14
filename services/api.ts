@@ -68,7 +68,7 @@ export const fetchUsers = async (): Promise<User[]> => {
     return data;
 };
 export const fetchDepartments = async (): Promise<Department[]> => {
-    const { data, error } = await supabase.from('departments').select('id, name, description, coordinator_id');
+    const { data, error } = await supabase.from('departments').select('id, name, description, coordinator');
     if (error) throw error;
     return data;
 };
@@ -323,9 +323,9 @@ export const deleteUser = async (userId: string): Promise<void> => {
 export const addDepartment = async (deptData: Omit<Department, 'id'>): Promise<Department> => {
     const payload = {
         ...deptData,
-        coordinator_id: deptData.coordinator_id === '' ? null : deptData.coordinator_id,
+        coordinator: deptData.coordinator === '' ? null : deptData.coordinator,
     };
-    const { data, error } = await supabase.from('departments').insert(payload).select('id, name, description, coordinator_id').single();
+    const { data, error } = await supabase.from('departments').insert(payload).select('id, name, description, coordinator').single();
     if (error) throw error;
     return data;
 };
@@ -334,9 +334,9 @@ export const updateDepartment = async (deptData: Department): Promise<Department
     const { id, ...updateData } = deptData;
     const payload = {
         ...updateData,
-        coordinator_id: updateData.coordinator_id === '' ? null : updateData.coordinator_id,
+        coordinator: updateData.coordinator === '' ? null : updateData.coordinator,
     };
-    const { data, error } = await supabase.from('departments').update(payload).eq('id', id).select('id, name, description, coordinator_id').single();
+    const { data, error } = await supabase.from('departments').update(payload).eq('id', id).select('id, name, description, coordinator').single();
     if (error) throw error;
     return data;
 };

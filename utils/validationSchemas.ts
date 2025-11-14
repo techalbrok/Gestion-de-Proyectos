@@ -26,7 +26,7 @@ export const profileSchema = z.object({
 export const departmentSchema = z.object({
     name: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
     description: z.string().optional(),
-    coordinator_id: z.string().optional(),
+    coordinator: z.string().optional(),
 });
 
 // User Schema (for editing)

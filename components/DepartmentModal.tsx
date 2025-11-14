@@ -30,7 +30,7 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({ department, onClose }
             setFormData({
                 name: '',
                 description: '',
-                coordinator_id: '',
+                coordinator: '',
             });
             setMemberIds(new Set());
         }
@@ -108,8 +108,8 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({ department, onClose }
                 </div>
                 <Select
                     label="Coordinador"
-                    name="coordinator_id"
-                    value={formData.coordinator_id || ''}
+                    name="coordinator"
+                    value={formData.coordinator || ''}
                     onChange={handleChange}
                 >
                     <option value="">Sin coordinador</option>
