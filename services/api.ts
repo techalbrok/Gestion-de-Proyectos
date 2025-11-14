@@ -325,7 +325,7 @@ export const addDepartment = async (deptData: Omit<Department, 'id'>): Promise<D
         ...deptData,
         coordinator_id: deptData.coordinator_id === '' ? null : deptData.coordinator_id,
     };
-    const { data, error } = await supabase.from('departments').insert(payload).select().single();
+    const { data, error } = await supabase.from('departments').insert(payload).select('id, name, description, coordinator_id').single();
     if (error) throw error;
     return data;
 };
@@ -336,7 +336,7 @@ export const updateDepartment = async (deptData: Department): Promise<Department
         ...updateData,
         coordinator_id: updateData.coordinator_id === '' ? null : updateData.coordinator_id,
     };
-    const { data, error } = await supabase.from('departments').update(payload).eq('id', id).select().single();
+    const { data, error } = await supabase.from('departments').update(payload).eq('id', id).select('id, name, description, coordinator_id').single();
     if (error) throw error;
     return data;
 };
