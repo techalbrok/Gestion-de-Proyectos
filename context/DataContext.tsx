@@ -1,9 +1,9 @@
-import React, { createContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useCallback, ReactNode, useMemo, useContext } from 'react';
 import { Project, User, Department, ProjectStage, Comment, UserDepartment, ProjectHistory, RecentHistoryEntry, Notification, Task } from '../types';
 import * as api from '../services/api';
 import { supabase } from '../services/supabase';
-import { useAuth } from '../hooks/useAuth';
-import { useUI } from '../hooks/useUI';
+import { AuthContext } from './AuthContext';
+import { UIContext } from './UIContext';
 
 interface DataContextType {
   loading: boolean;
@@ -41,8 +41,18 @@ interface DataContextType {
 export const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isAuthenticated, currentUser, setCurrentUser } = useAuth();
-  const { addToast } = useUI();
+  const authContext = useContext(AuthContext);
+  const uiContext = useContext(UIContext);
+
+  if (!authContext) {
+    throw new Error('DataProvider must be used within AuthProvider');
+  }
+  if (!uiContext) {
+    throw new Error('DataProvider must be used within UIProvider');
+  }
+
+  const { isAuthenticated, currentUser, setCurrentUser } = authContext;
+  const { addToast } = uiContext;
 
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
