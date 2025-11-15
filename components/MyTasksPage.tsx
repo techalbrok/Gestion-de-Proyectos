@@ -5,20 +5,158 @@ import { useAuth } from '../hooks/useAuth';
 import { useUI } from '../hooks/useUI';
 import { fetchUserTasks } from '../services/api';
 import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Modal from './ui/Modal';
 import EmptyState from './ui/EmptyState';
-import { CheckCircleIcon, ClipboardListIcon, CalendarDaysIcon, LoadingSpinner } from './icons/Icons';
+import { CheckCircleIcon, ClipboardListIcon, CalendarDaysIcon, LoadingSpinner, PlusIcon, PencilIcon, TrashIcon } from './icons/Icons';
+import Avatar from './ui/Avatar';
 
 interface TaskWithProject extends Task {
     project: Project;
 }
 
+interface TaskModalProps {
+    task: TaskWithProject | null;
+    projects: Project[];
+    users: any[];
+    onClose: () => void;
+    onSave: (taskData: any) => void;
+    onDelete?: (taskId: string) => void;
+}
+
+const TaskModal: React.FC<TaskModalProps> = ({ task, projects, users, onClose, onSave, onDelete }) => {
+    const [title, setTitle] = useState(task?.title || '');
+    const [projectId, setProjectId] = useState(task?.project_id || '');
+    const [assignedTo, setAssignedTo] = useState(task?.assigned_to || '');
+    const [dueDate, setDueDate] = useState(task?.due_date || '');
+    const [isCompleted, setIsCompleted] = useState(task?.is_completed || false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = async () => {
+        if (!title.trim() || !projectId) return;
+
+        setIsSaving(true);
+        try {
+            const taskData = {
+                title: title.trim(),
+                project_id: projectId,
+                assigned_to: assignedTo || undefined,
+                due_date: dueDate || null,
+                is_completed: isCompleted,
+            };
+            await onSave(taskData);
+            onClose();
+        } catch (error) {
+            console.error('Error saving task:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!task || !onDelete) return;
+        try {
+            await onDelete(task.id);
+            onClose();
+        } catch (error) {
+            console.error('Error deleting task:', error);
+        }
+    };
+
+    const availableUsers = projectId ? users.filter(u => {
+        const project = projects.find(p => p.id === projectId);
+        return project?.members.includes(u.id);
+    }) : [];
+
+    return (
+        <Modal title={task ? 'Editar Tarea' : 'Nueva Tarea'} onClose={onClose}>
+            <div className="space-y-4">
+                <Input
+                    label="Título de la tarea"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Describe la tarea..."
+                    required
+                />
+                
+                <Select
+                    label="Proyecto"
+                    value={projectId}
+                    onChange={(e) => setProjectId(e.target.value)}
+                    required
+                >
+                    <option value="">Seleccionar proyecto</option>
+                    {projects.map(p => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                    ))}
+                </Select>
+
+                {projectId && (
+                    <Select
+                        label="Asignado a"
+                        value={assignedTo}
+                        onChange={(e) => setAssignedTo(e.target.value)}
+                    >
+                        <option value="">Sin asignar</option>
+                        {availableUsers.map(u => (
+                            <option key={u.id} value={u.id}>{u.full_name}</option>
+                        ))}
+                    </Select>
+                )}
+
+                <Input
+                    label="Fecha límite"
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                />
+
+                <div className="flex items-center space-x-2">
+                    <input
+                        type="checkbox"
+                        id="completed"
+                        checked={isCompleted}
+                        onChange={(e) => setIsCompleted(e.target.checked)}
+                        className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary"
+                    />
+                    <label htmlFor="completed" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Marcar como completada
+                    </label>
+                </div>
+            </div>
+
+            <div className="mt-6 flex justify-between">
+                <div>
+                    {task && onDelete && (
+                        <Button variant="destructive" onClick={handleDelete}>
+                            <TrashIcon className="w-4 h-4 mr-2" />
+                            Eliminar
+                        </Button>
+                    )}
+                </div>
+                <div className="flex space-x-3">
+                    <Button variant="secondary" onClick={onClose}>
+                        Cancelar
+                    </Button>
+                    <Button onClick={handleSave} disabled={isSaving || !title.trim() || !projectId}>
+                        {isSaving ? 'Guardando...' : (task ? 'Actualizar' : 'Crear')}
+                    </Button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
 const MyTasksPage: React.FC = () => {
-    const { projects } = useData();
+    const { projects, users, addTask, updateTask, deleteTask } = useData();
     const { currentUser } = useAuth();
-    const { setView, setProjectToOpen } = useUI();
+    const { setView, setProjectToOpen, showConfirmation } = useUI();
     const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending');
     const [myTasks, setMyTasks] = useState<TaskWithProject[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTask, setSelectedTask] = useState<TaskWithProject | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const loadMyTasks = async () => {
@@ -75,6 +213,62 @@ const MyTasksPage: React.FC = () => {
     const handleProjectClick = (projectId: string) => {
         setProjectToOpen(projectId);
         setView('projects');
+    };
+
+    const handleCreateTask = () => {
+        setSelectedTask(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditTask = (task: TaskWithProject) => {
+        setSelectedTask(task);
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteTask = (task: TaskWithProject) => {
+        showConfirmation({
+            title: 'Eliminar Tarea',
+            message: `¿Estás seguro de que quieres eliminar la tarea "${task.title}"?`,
+            confirmText: 'Eliminar',
+            onConfirm: async () => {
+                try {
+                    await deleteTask(task.id, task.project_id);
+                    setMyTasks(prev => prev.filter(t => t.id !== task.id));
+                } catch (error) {
+                    console.error('Error deleting task:', error);
+                }
+            }
+        });
+    };
+
+    const handleSaveTask = async (taskData: any) => {
+        if (selectedTask) {
+            // Update existing task
+            await updateTask(selectedTask.id, taskData);
+            setMyTasks(prev => prev.map(t => 
+                t.id === selectedTask.id 
+                    ? { ...t, ...taskData }
+                    : t
+            ));
+        } else {
+            // Create new task
+            const newTask = await addTask(taskData, taskData.project_id);
+            const project = projects.find(p => p.id === taskData.project_id);
+            if (project) {
+                setMyTasks(prev => [...prev, { ...newTask, project }]);
+            }
+        }
+    };
+
+    const handleToggleComplete = async (task: TaskWithProject) => {
+        const updatedTask = { ...task, is_completed: !task.is_completed };
+        await updateTask(task.id, { is_completed: !task.is_completed });
+        setMyTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t));
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedTask(null);
     };
 
     if (!currentUser) {
@@ -134,6 +328,10 @@ const MyTasksPage: React.FC = () => {
                         Completadas ({myTasks.filter(t => t.is_completed).length})
                     </Button>
                 </div>
+                <Button onClick={handleCreateTask}>
+                    <PlusIcon className="w-5 h-5 mr-2" />
+                    Nueva Tarea
+                </Button>
               </div>
             </div>
 
@@ -163,17 +361,23 @@ const MyTasksPage: React.FC = () => {
                                 <div className="space-y-2">
                                     {tasks.map(task => {
                                         const isOverdue = task.due_date && new Date(task.due_date) < new Date() && !task.is_completed;
+                                        const assignedUser = users.find(u => u.id === task.assigned_to);
                                         return (
                                             <div
                                                 key={task.id}
-                                                className="flex items-center p-3 space-x-3 bg-gray-50 dark:bg-dark-bg rounded-md hover:bg-gray-100 dark:hover:bg-dark-bg/50"
+                                                className="flex items-center p-3 space-x-3 bg-gray-50 dark:bg-dark-bg rounded-md hover:bg-gray-100 dark:hover:bg-dark-bg/50 group"
                                             >
                                                 <div className="flex items-center justify-center">
-                                                    {task.is_completed ? (
-                                                        <CheckCircleIcon className="w-6 h-6 text-green-500" />
-                                                    ) : (
-                                                        <div className="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
-                                                    )}
+                                                    <button
+                                                        onClick={() => handleToggleComplete(task)}
+                                                        className="flex items-center justify-center"
+                                                    >
+                                                        {task.is_completed ? (
+                                                            <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                                                        ) : (
+                                                            <div className="w-6 h-6 border-2 border-gray-300 rounded-full hover:border-green-400 transition-colors"></div>
+                                                        )}
+                                                    </button>
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className={`text-sm font-medium ${task.is_completed ? 'line-through text-gray-500' : 'text-gray-800 dark:text-gray-200'}`}>
@@ -189,6 +393,27 @@ const MyTasksPage: React.FC = () => {
                                                         </div>
                                                     )}
                                                 </div>
+                                                {assignedUser && (
+                                                    <div className="flex items-center space-x-1">
+                                                        <Avatar user={assignedUser} size="sm" />
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => handleEditTask(task)}
+                                                        className="p-1 text-gray-400 hover:text-blue-500 rounded"
+                                                        title="Editar tarea"
+                                                    >
+                                                        <PencilIcon className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteTask(task)}
+                                                        className="p-1 text-gray-400 hover:text-red-500 rounded"
+                                                        title="Eliminar tarea"
+                                                    >
+                                                        <TrashIcon className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -199,6 +424,8 @@ const MyTasksPage: React.FC = () => {
                 )}
             </div>
         </div>
+        
+        {isModalOpen && <TaskModal task={selectedTask} projects={projects} users={users} onClose={closeModal} onSave={handleSaveTask} onDelete={selectedTask ? () => handleDeleteTask(selectedTask) : undefined} />}
     );
 };
 
