@@ -33,30 +33,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addToast = (message: string, type: 'success' | 'error') => {
     const id = Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, message, type }]);
-    // Auto remove after 5 seconds
     setTimeout(() => {
       setToasts(prev => prev.filter(toast => toast.id !== id));
     }, 5000);
   };
 
   useEffect(() => {
-    const initializeAuth = async () => {
+    let mounted = true;
+
+    const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
+        if (!mounted) return;
+
         if (session) {
           setSession(session);
           try {
             const profile = await api.fetchUserProfile(session.user.id);
-            setCurrentUser(profile);
-            setIsAuthenticated(true);
+            if (mounted) {
+              setCurrentUser(profile);
+              setIsAuthenticated(true);
+            }
           } catch (error) {
-            console.error("Critical error: User authenticated but profile not found. Logging out.", error);
-            addToast("Error al cargar tu perfil. Se cerrará la sesión.", 'error');
-            await api.logout();
-            setCurrentUser(null);
-            setSession(null);
-            setIsAuthenticated(false);
+            console.error("Error loading profile:", error);
+            if (mounted) {
+              addToast("Error al cargar tu perfil.", 'error');
+              await supabase.auth.signOut();
+              setSession(null);
+              setCurrentUser(null);
+              setIsAuthenticated(false);
+            }
           }
         } else {
           setSession(null);
@@ -64,38 +71,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error("Error fetching initial session:", error);
-        setSession(null);
-        setCurrentUser(null);
-        setIsAuthenticated(false);
+        console.error("Error initializing auth:", error);
+        if (mounted) {
+          setSession(null);
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    const fetchAndSetUserProfile = async (session: Session) => {
-        try {
-            const profile = await api.fetchUserProfile(session.user.id);
-            setCurrentUser(profile);
-            setIsAuthenticated(true);
-        } catch (error) {
-            console.error("Critical error: User authenticated but profile not found. Logging out.", error);
-            addToast("Error al cargar tu perfil. Se cerrará la sesión.", 'error');
-            await api.logout();
-            setCurrentUser(null);
-            setSession(null);
-            setIsAuthenticated(false);
-        }
-    };
+    initAuth();
 
-    // Initialize auth on mount
-    initializeAuth();
-    
-    // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
       if (session) {
         setSession(session);
-        await fetchAndSetUserProfile(session);
+        try {
+          const profile = await api.fetchUserProfile(session.user.id);
+          if (mounted) {
+            setCurrentUser(profile);
+            setIsAuthenticated(true);
+          }
+        } catch (error) {
+          console.error("Error loading profile on auth change:", error);
+          if (mounted) {
+            addToast("Error al cargar tu perfil.", 'error');
+            setCurrentUser(null);
+            setIsAuthenticated(false);
+          }
+        }
       } else {
         setSession(null);
         setCurrentUser(null);
@@ -104,37 +113,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     return () => {
-      authListener.subscription.unsubscribe();
+      mounted = false;
+      subscription.unsubscribe();
     };
-  }, []); // Empty dependency array to run only once
-  
+  }, []); // Empty dependency array - only run once
+
   const login = useCallback(async (email: string, password?: string) => {
     try {
-        await api.login(email, password);
-        addToast('Inicio de sesión exitoso. ¡Bienvenido!', 'success');
+      await api.login(email, password);
+      addToast('Inicio de sesión exitoso. ¡Bienvenido!', 'success');
     } catch (error: any) {
-        addToast(error.message || 'Error al iniciar sesión.', 'error');
-        throw error;
+      addToast(error.message || 'Error al iniciar sesión.', 'error');
+      throw error;
     }
   }, []);
 
   const register = useCallback(async (fullName: string, email: string, password?: string) => {
     try {
-        await api.register(fullName, email, password);
-        addToast('¡Registro exitoso! Revisa tu correo para confirmar la cuenta.', 'success');
+      await api.register(fullName, email, password);
+      addToast('¡Registro exitoso! Revisa tu correo para confirmar la cuenta.', 'success');
     } catch (error: any) {
-        addToast(error.message || 'Error en el registro.', 'error');
-        throw error;
+      addToast(error.message || 'Error en el registro.', 'error');
+      throw error;
     }
   }, []);
   
   const requestPasswordReset = useCallback(async (email: string) => {
     try {
-        await api.requestPasswordReset(email);
-        addToast('Si existe una cuenta, se ha enviado un enlace de recuperación.', 'success');
+      await api.requestPasswordReset(email);
+      addToast('Si existe una cuenta, se ha enviado un enlace de recuperación.', 'success');
     } catch (error: any) {
-        addToast(error.message || 'Error al solicitar la recuperación.', 'error');
-        throw error;
+      addToast(error.message || 'Error al solicitar la recuperación.', 'error');
+      throw error;
     }
   }, []);
 
@@ -150,22 +160,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const value = useMemo(() => ({
-    session, currentUser, isAuthenticated,
-    login, logout, register, requestPasswordReset,
-    authView, setAuthView,
+    session,
+    currentUser,
+    isAuthenticated,
+    login,
+    logout,
+    register,
+    requestPasswordReset,
+    authView,
+    setAuthView,
     setCurrentUser,
     authToasts: toasts
   }), [session, currentUser, isAuthenticated, login, logout, register, requestPasswordReset, authView, toasts]);
 
   if (loading) {
-      return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-dark-bg">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
-          </div>
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-dark-bg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
         </div>
-      );
+      </div>
+    );
   }
 
   return (
