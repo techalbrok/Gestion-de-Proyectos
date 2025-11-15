@@ -30,24 +30,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState<Array<{id: string, message: string, type: 'success' | 'error'}>>([]);
 
-  const addToast = useCallback((message: string, type: 'success' | 'error') => {
+  const addToast = (message: string, type: 'success' | 'error') => {
     const id = Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, message, type }]);
     // Auto remove after 5 seconds
     setTimeout(() => {
       setToasts(prev => prev.filter(toast => toast.id !== id));
     }, 5000);
-  }, []);
-
-  const handleLogoutAndError = useCallback(async (errorMessage: string) => {
-      addToast(errorMessage, 'error');
-      await api.logout();
-      setCurrentUser(null);
-      setSession(null);
-      setIsAuthenticated(false);
-  }, [addToast]);
+  };
 
   useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          setSession(session);
+          try {
+            const profile = await api.fetchUserProfile(session.user.id);
+            setCurrentUser(profile);
+            setIsAuthenticated(true);
+          } catch (error) {
+            console.error("Critical error: User authenticated but profile not found. Logging out.", error);
+            addToast("Error al cargar tu perfil. Se cerrará la sesión.", 'error');
+            await api.logout();
+            setCurrentUser(null);
+            setSession(null);
+            setIsAuthenticated(false);
+          }
+        } else {
+          setSession(null);
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error("Error fetching initial session:", error);
+        setSession(null);
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     const fetchAndSetUserProfile = async (session: Session) => {
         try {
             const profile = await api.fetchUserProfile(session.user.id);
@@ -55,35 +80,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsAuthenticated(true);
         } catch (error) {
             console.error("Critical error: User authenticated but profile not found. Logging out.", error);
-            handleLogoutAndError("Error al cargar tu perfil. Se cerrará la sesión.");
-        }
-    }
-
-    // Initial session check.
-    // This is wrapped in an async IIFE to handle promises cleanly and ensure
-    // the loading state is always set to false.
-    (async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                setSession(session);
-                await fetchAndSetUserProfile(session);
-            } else {
-                setSession(null);
-                setCurrentUser(null);
-                setIsAuthenticated(false);
-            }
-        } catch (error) {
-            console.error("Error fetching initial session:", error);
-            setSession(null);
+            addToast("Error al cargar tu perfil. Se cerrará la sesión.", 'error');
+            await api.logout();
             setCurrentUser(null);
+            setSession(null);
             setIsAuthenticated(false);
-        } finally {
-            setLoading(false);
         }
-    })();
+    };
 
-
+    // Initialize auth on mount
+    initializeAuth();
+    
+    // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
         setSession(session);
@@ -98,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [handleLogoutAndError]);
+  }, []); // Empty dependency array to run only once
   
   const login = useCallback(async (email: string, password?: string) => {
     try {
@@ -108,7 +116,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addToast(error.message || 'Error al iniciar sesión.', 'error');
         throw error;
     }
-  }, [addToast]);
+  }, []);
 
   const register = useCallback(async (fullName: string, email: string, password?: string) => {
     try {
@@ -118,7 +126,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addToast(error.message || 'Error en el registro.', 'error');
         throw error;
     }
-  }, [addToast]);
+  }, []);
   
   const requestPasswordReset = useCallback(async (email: string) => {
     try {
@@ -128,7 +136,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addToast(error.message || 'Error al solicitar la recuperación.', 'error');
         throw error;
     }
-  }, [addToast]);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -139,7 +147,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Error during logout:', error);
       addToast('Error al cerrar sesión.', 'error');
     }
-  }, [addToast]);
+  }, []);
 
   const value = useMemo(() => ({
     session, currentUser, isAuthenticated,
