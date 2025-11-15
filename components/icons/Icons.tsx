@@ -251,3 +251,15 @@ export const Bars3Icon: React.FC<IconProps> = (props) => (
     <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H20.25" />
   </svg>
 );
+export const PaperclipIcon: React.FC<IconProps> = (props) => (
+  <svg {...defaultProps} {...props}>
+    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+  </svg>
+);
+export const DownloadIcon: React.FC<IconProps> = (props) => (
+  <svg {...defaultProps} {...props}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" x2="12" y1="15" y2="3" />
+  </svg>
+);

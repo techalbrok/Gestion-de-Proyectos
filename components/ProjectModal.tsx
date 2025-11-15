@@ -13,6 +13,7 @@ import ProjectDetailsTab from './ProjectDetailsTab';
 import ProjectCommentsTab from './ProjectCommentsTab';
 import ProjectHistoryTab from './ProjectHistoryTab';
 import ProjectTasksTab from './ProjectTasksTab';
+import { ProjectAttachmentsTab } from './ProjectAttachmentsTab';
 
 interface ProjectModalProps {
   project: Project | null;
@@ -140,6 +141,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
                 <TabButton tabName="details" label="Detalles" />
                 {project && <TabButton tabName="tasks" label="Tareas" />}
                 {project && <TabButton tabName="comments" label="Comentarios" />}
+                {project && <TabButton tabName="attachments" label="Archivos" />}
                 {project && <TabButton tabName="history" label="Historial" />}
             </div>
         </div>
@@ -171,6 +173,9 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
                 setComments={setComments}
                 loadingData={loadingData}
             />
+        )}
+        {activeTab === 'attachments' && project && (
+            <ProjectAttachmentsTab projectId={project.id} />
         )}
         {activeTab === 'history' && (
             <ProjectHistoryTab

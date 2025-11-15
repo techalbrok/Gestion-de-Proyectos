@@ -1,4 +1,4 @@
-import { Project, User, Department, UserRole, ProjectStage, Priority, Comment, ProjectHistory, UserDepartment, RecentHistoryEntry, Notification, NotificationType, Task } from '../types';
+import { Project, User, Department, UserRole, ProjectStage, Priority, Comment, ProjectHistory, UserDepartment, RecentHistoryEntry, Notification, NotificationType, Task, ProjectAttachment } from '../types';
 import { supabase } from './supabase';
 import { STAGE_CONFIG } from '../constants';
 
@@ -492,4 +492,78 @@ export const markAllAsRead = async (): Promise<void> => {
         console.error("Failed to mark notifications as read:", error);
         throw error;
     };
+};
+
+// --- PROJECT ATTACHMENTS ---
+export const fetchProjectAttachments = async (projectId: string): Promise<ProjectAttachment[]> => {
+    const { data, error } = await supabase
+        .from('project_attachments')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+};
+
+export const uploadProjectAttachment = async (
+    projectId: string,
+    userId: string,
+    file: File
+): Promise<ProjectAttachment> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${projectId}/${userId}-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('project-attachments')
+        .upload(fileName, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('project-attachments')
+        .getPublicUrl(fileName);
+
+    const attachmentData = {
+        project_id: projectId,
+        user_id: userId,
+        file_name: file.name,
+        file_path: publicUrl,
+        file_type: file.type,
+        file_size: file.size,
+    };
+
+    const { data, error } = await supabase
+        .from('project_attachments')
+        .insert(attachmentData)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deleteProjectAttachment = async (attachmentId: string): Promise<void> => {
+    const { data: attachment, error: fetchError } = await supabase
+        .from('project_attachments')
+        .select('file_path')
+        .eq('id', attachmentId)
+        .single();
+
+    if (fetchError) throw fetchError;
+    if (!attachment) throw new Error('Attachment not found');
+
+    const fileName = attachment.file_path.split('/').slice(-2).join('/');
+
+    const { error: storageError } = await supabase.storage
+        .from('project-attachments')
+        .remove([fileName]);
+
+    if (storageError) console.error('Error deleting file from storage:', storageError);
+
+    const { error } = await supabase
+        .from('project_attachments')
+        .delete()
+        .eq('id', attachmentId);
+
+    if (error) throw error;
 };
