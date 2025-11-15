@@ -1,6 +1,6 @@
 import React from 'react';
 import { ProjectStage, Priority, Project, ProjectHistory } from '../types';
-import { ClipboardListIcon, Cog6ToothIcon, CheckCircleIcon, ExclamationTriangleIcon, ClockIcon, UsersIcon } from './icons/Icons';
+import { ClipboardListIcon, Cog6ToothIcon, CheckCircleIcon, ExclamationTriangleIcon, ClockIcon, UsersIcon, ChartPieIcon } from './icons/Icons';
 import Avatar from './ui/Avatar';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from '../constants';
 import { useMemo } from 'react';
