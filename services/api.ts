@@ -55,7 +55,7 @@ export const fetchUserProfile = async (userId: string): Promise<User> => {
 export const fetchProjects = async (): Promise<Project[]> => {
     const { data, error } = await supabase
         .from('projects')
-        .select('*, comments!project_id(count), tasks!project_id(count)')
+        .select('*, comments!project_id(count), sub_tasks!project_id(count)')
         .not('stage', 'in', `(${ProjectStage.COMPLETED},${ProjectStage.CANCELLED})`);
 
     if (error) throw error;
@@ -63,9 +63,9 @@ export const fetchProjects = async (): Promise<Project[]> => {
     return (data as any[]).map(p => ({ 
         ...p,
         comments_count: p.comments[0]?.count || 0,
-        tasks_count: p.tasks[0]?.count || 0,
+        tasks_count: p.sub_tasks[0]?.count || 0,
         comments: undefined,
-        tasks: undefined,
+        sub_tasks: undefined,
         history: []
     }));
 };
@@ -74,7 +74,7 @@ export const fetchProjects = async (): Promise<Project[]> => {
 export const fetchArchivedProjects = async (): Promise<Project[]> => {
     const { data, error } = await supabase
         .from('projects')
-        .select('*, comments!project_id(count), tasks!project_id(count)')
+        .select('*, comments!project_id(count), sub_tasks!project_id(count)')
         .in('stage', [ProjectStage.COMPLETED, ProjectStage.CANCELLED]);
 
     if (error) throw error;
@@ -82,9 +82,9 @@ export const fetchArchivedProjects = async (): Promise<Project[]> => {
     return (data as any[]).map(p => ({
         ...p,
         comments_count: p.comments[0]?.count || 0,
-        tasks_count: p.tasks[0]?.count || 0,
+        tasks_count: p.sub_tasks[0]?.count || 0,
         comments: undefined,
-        tasks: undefined,
+        sub_tasks: undefined,
         history: []
     }));
 };
@@ -273,7 +273,7 @@ export const deleteProject = async (projectId: string, currentUser: User, userDe
     const deleteHistory = supabase.from('project_history').delete().eq('project_id', projectId);
     const deleteNotifications = supabase.from('notifications').delete().eq('project_id', projectId);
     // Also delete tasks
-    const deleteTasks = supabase.from('tasks').delete().eq('project_id', projectId);
+    const deleteTasks = supabase.from('sub_tasks').delete().eq('project_id', projectId);
 
 
     const [commentsResult, historyResult, notificationsResult, tasksResult] = await Promise.all([
@@ -329,25 +329,25 @@ export const addComment = async (projectId: string, content: string, userId: str
 
 // --- TASK FUNCTIONS ---
 export const fetchTasks = async (projectId: string): Promise<Task[]> => {
-    const { data, error } = await supabase.from('tasks').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
+    const { data, error } = await supabase.from('sub_tasks').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
     if (error) throw error;
     return data;
 };
 
 export const addTask = async (taskData: Omit<Task, 'id' | 'created_at'>): Promise<Task> => {
-    const { data, error } = await supabase.from('tasks').insert(taskData).select().single();
+    const { data, error } = await supabase.from('sub_tasks').insert(taskData).select().single();
     if (error) throw error;
     return data;
 };
 
 export const updateTask = async (taskId: string, updateData: Partial<Omit<Task, 'id'>>): Promise<Task> => {
-    const { data, error } = await supabase.from('tasks').update(updateData).eq('id', taskId).select().single();
+    const { data, error } = await supabase.from('sub_tasks').update(updateData).eq('id', taskId).select().single();
     if (error) throw error;
     return data;
 };
 
 export const deleteTask = async (taskId: string): Promise<void> => {
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+    const { error } = await supabase.from('sub_tasks').delete().eq('id', taskId);
     if (error) throw error;
 };
 // --------------------
