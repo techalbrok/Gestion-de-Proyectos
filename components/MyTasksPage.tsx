@@ -425,7 +425,16 @@ const MyTasksPage: React.FC = () => {
             </div>
         </div>
         
-        {isModalOpen && <TaskModal task={selectedTask} projects={projects} users={users} onClose={closeModal} onSave={handleSaveTask} onDelete={selectedTask ? () => handleDeleteTask(selectedTask) : undefined} />}
+        {isModalOpen && (
+            <TaskModal 
+                task={selectedTask} 
+                projects={projects} 
+                users={users} 
+                onClose={closeModal} 
+                onSave={handleSaveTask} 
+                onDelete={selectedTask ? () => handleDeleteTask(selectedTask) : undefined} 
+            />
+        )}
     );
 };
 
