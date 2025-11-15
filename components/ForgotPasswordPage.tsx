@@ -64,7 +64,7 @@ const ForgotPasswordPage: React.FC = () => {
                             />
                             
                             <div>
-                                <Button type="submit" className="w-full" disabled={isLoading}>
+                                <Button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white border-primary" disabled={isLoading}>
                                     {isLoading ? <LoadingSpinner className="w-5 h-5 mx-auto" /> : 'Enviar Enlace'}
                                 </Button>
                             </div>

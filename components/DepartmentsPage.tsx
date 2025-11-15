@@ -53,12 +53,22 @@ const DepartmentsPage: React.FC = () => {
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Departamentos</h1>
+            <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 border-l-4 border-primary">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <BuildingLibraryIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Departamentos</h1>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Organización y gestión de departamentos empresariales</p>
+                    </div>
+                </div>
                 <Button onClick={handleCreate}>
                     <PlusIcon className="w-5 h-5 mr-2" />
                     Crear Departamento
                 </Button>
+              </div>
             </div>
 
             {departmentData.length > 0 ? (

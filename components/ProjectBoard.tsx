@@ -169,8 +169,17 @@ const ProjectBoard: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full p-6 space-y-6">
-        <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Tablero de Proyectos</h1>
+        <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 border-l-4 border-primary">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <ClipboardListIcon className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Tablero de Proyectos</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Gestión y seguimiento de todos los proyectos</p>
+              </div>
+            </div>
             <div className="flex items-center space-x-4">
                 <div className="flex items-center bg-gray-100 dark:bg-dark-bg rounded-md p-1">
                     <button
@@ -208,6 +217,7 @@ const ProjectBoard: React.FC = () => {
                     Crear Proyecto
                 </Button>
             </div>
+          </div>
         </div>
 
         <div className="flex items-center space-x-4 p-4 bg-white dark:bg-dark-card rounded-lg shadow-sm">

@@ -94,17 +94,27 @@ const CalendarPage: React.FC = () => {
 
   return (
     <div className="p-6 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading capitalize">
-            {monthName} {year}
-          </h1>
-          <div className="flex items-center space-x-1">
-            <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-card"><ChevronLeftIcon className="w-5 h-5" /></button>
-            <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-card"><ChevronRightIcon className="w-5 h-5" /></button>
+      <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 border-l-4 border-primary mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <CalendarDaysIcon className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading capitalize">
+                  Calendario - {monthName} {year}
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Vista cronológica de proyectos y fechas importantes</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-1">
+              <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-card"><ChevronLeftIcon className="w-5 h-5" /></button>
+              <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-card"><ChevronRightIcon className="w-5 h-5" /></button>
+            </div>
           </div>
+          <Button variant="secondary" onClick={handleGoToToday}>Hoy</Button>
         </div>
-        <Button variant="secondary" onClick={handleGoToToday}>Hoy</Button>
       </div>
       <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-px bg-gray-200 dark:bg-dark-border rounded-lg overflow-hidden shadow-md">
         {daysOfWeek.map(day => (

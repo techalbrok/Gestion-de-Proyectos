@@ -92,9 +92,16 @@ const DepartmentProjectsPage: React.FC = () => {
                         </Button>
                     </div>
                 </div>
-                <div className="p-6 bg-white dark:bg-dark-card rounded-lg shadow-sm">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white font-heading">{department.name}</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">{department.description}</p>
+                <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 border-l-4 border-primary">
+                    <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                            <BuildingLibraryIcon className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white font-heading">{department.name}</h1>
+                            <p className="text-gray-600 dark:text-gray-400 mt-2">{department.description}</p>
+                        </div>
+                    </div>
                     {coordinator && (
                         <div className="flex items-center space-x-2 mt-4 text-sm">
                             <span className="font-semibold dark:text-gray-300">Coordinador:</span>

@@ -103,8 +103,17 @@ const MyTasksPage: React.FC = () => {
 
     return (
         <div className="p-6 h-full flex flex-col space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Mis Tareas</h1>
+            <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 border-l-4 border-primary">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <CheckCircleIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Mis Tareas</h1>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Gestión personal de tareas asignadas</p>
+                    </div>
+                </div>
                 <div className="flex items-center space-x-2">
                     <Button
                         variant={filter === 'all' ? 'primary' : 'secondary'}
@@ -125,6 +134,7 @@ const MyTasksPage: React.FC = () => {
                         Completadas ({myTasks.filter(t => t.is_completed).length})
                     </Button>
                 </div>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-6">

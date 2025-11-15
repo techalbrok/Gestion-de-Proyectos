@@ -81,7 +81,17 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Dashboard</h1>
+      <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 border-l-4 border-primary">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <ChartPieIcon className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Dashboard - Resumen Ejecutivo</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Visualización de KPIs principales y rankings por dimensión</p>
+          </div>
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -51,8 +51,16 @@ const UsersPage: React.FC = () => {
 
     return (
         <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Gestión de Usuarios</h1>
+            <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 border-l-4 border-primary mb-6">
+                <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                        <UsersIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Gestión de Usuarios</h1>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Administración y configuración de usuarios del sistema</p>
+                    </div>
+                </div>
             </div>
             
             <div className="p-4 mb-6 rounded-md bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400">

@@ -40,8 +40,8 @@ const Sidebar: React.FC = () => {
   return (
     <aside className={`fixed inset-y-0 left-0 z-40 flex flex-col w-64 bg-gray-50 dark:bg-dark-bg border-r border-gray-200 dark:border-dark-border transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-dark-border">
-        <img src="/images/logo_albrok_rojo_transp.png" alt="Albroxfera Logo" className="h-8 block dark:hidden" />
-        <img src="/images/logo_albrok_blanco_transp.png" alt="Albroxfera Logo" className="h-8 hidden dark:block" />
+        <img src="/images/logo_albrok_rojo_transp.png" alt="Albroxfera Logo" className="h-[100px] block dark:hidden" />
+        <img src="/images/logo_albrok_blanco_transp.png" alt="Albroxfera Logo" className="h-[100px] hidden dark:block" />
       </div>
       <nav className="flex-1 px-4 py-4 space-y-2">
         {navItems.map(item => <NavLink key={item.id} {...item} />)}
