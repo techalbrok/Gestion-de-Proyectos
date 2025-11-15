@@ -18,10 +18,9 @@ import { useData } from './hooks/useData';
 import { useUI } from './hooks/useUI';
 
 const App: React.FC = () => {
-  const { isAuthenticated, authView } = useAuth();
+  const { isAuthenticated, authView, authToasts } = useAuth();
   const { loading } = useData();
   const { view, toasts, removeToast, confirmation, hideConfirmation, isSidebarOpen, closeSidebar } = useUI();
-  const { authToasts } = useAuth();
 
   if (!isAuthenticated) {
     if (authView === 'forgot-password') {

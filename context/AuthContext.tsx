@@ -65,14 +65,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     (async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            setSession(session);
             if (session) {
+                setSession(session);
                 await fetchAndSetUserProfile(session);
             } else {
+                setSession(null);
+                setCurrentUser(null);
                 setIsAuthenticated(false);
             }
         } catch (error) {
             console.error("Error fetching initial session:", error);
+            setSession(null);
+            setCurrentUser(null);
             setIsAuthenticated(false);
         } finally {
             setLoading(false);
@@ -81,10 +85,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
       if (session) {
+        setSession(session);
         await fetchAndSetUserProfile(session);
       } else {
+        setSession(null);
         setCurrentUser(null);
         setIsAuthenticated(false);
       }
@@ -142,10 +147,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     authView, setAuthView,
     setCurrentUser,
     authToasts: toasts
-  }), [session, currentUser, isAuthenticated, login, logout, register, requestPasswordReset, authView]);
+  }), [session, currentUser, isAuthenticated, login, logout, register, requestPasswordReset, authView, toasts]);
 
   if (loading) {
-      return null; // Or a loading spinner for the whole app
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-dark-bg">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
+          </div>
+        </div>
+      );
   }
 
   return (
