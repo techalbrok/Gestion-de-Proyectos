@@ -7,6 +7,7 @@ import ProjectModal from './ProjectModal';
 import Button from './ui/Button';
 import Select from './ui/Select';
 import { PlusIcon, FunnelIcon, ArchiveIcon, DocumentPlusIcon, Squares2X2Icon, ListBulletIcon, DownloadIcon } from './icons/Icons';
+import { ClipboardListIcon } from './icons/Icons';
 import EmptyState from './ui/EmptyState';
 import { useData } from '../hooks/useData';
 import { useAuth } from '../hooks/useAuth';
