@@ -296,6 +296,7 @@ const MyTasksPage: React.FC = () => {
     }
 
     return (
+        <>
         <div className="p-6 h-full flex flex-col space-y-6">
             <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-6 border-l-4 border-primary">
               <div className="flex items-center justify-between">
@@ -424,7 +425,6 @@ const MyTasksPage: React.FC = () => {
                 )}
             </div>
         </div>
-        
         {isModalOpen && (
             <TaskModal 
                 task={selectedTask} 
@@ -435,6 +435,7 @@ const MyTasksPage: React.FC = () => {
                 onDelete={selectedTask ? () => handleDeleteTask(selectedTask) : undefined} 
             />
         )}
+        </>
     );
 };
 
