@@ -155,7 +155,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addToast('Sesión cerrada correctamente.', 'success');
     } catch (error: any) {
       console.error('Error during logout:', error);
-      addToast('Error al cerrar sesión.', 'error');
+      setAuthView('signin');
+      if (error.message && !error.message.includes('session_not_found')) {
+        addToast('Error al cerrar sesión.', 'error');
+      } else {
+        addToast('Sesión cerrada correctamente.', 'success');
+      }
     }
   }, []);
 

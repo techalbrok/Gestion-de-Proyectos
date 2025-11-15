@@ -71,12 +71,20 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ project, tasks, setTa
 
         setIsSubmitting(true);
         try {
-            const newTask = await addTask({
+            const taskPayload: any = {
                 title: newTaskTitle.trim(),
                 is_completed: false,
-                assigned_to: newTaskAssignee || undefined,
-                due_date: newTaskDueDate || null,
-            }, project.id);
+            };
+
+            if (newTaskAssignee) {
+                taskPayload.assigned_to = newTaskAssignee;
+            }
+
+            if (newTaskDueDate) {
+                taskPayload.due_date = newTaskDueDate;
+            }
+
+            const newTask = await addTask(taskPayload, project.id);
             setTasks(prev => [...prev, newTask]);
             setNewTaskTitle('');
             setNewTaskAssignee('');

@@ -345,7 +345,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addTask = useCallback(async (taskData: Omit<Task, 'id' | 'created_at' | 'created_by' | 'project_id'>, projectId: string): Promise<Task> => {
       if (!currentUser) throw new Error("User not authenticated.");
       try {
-          const newTaskPayload = { ...taskData, project_id: projectId, created_by: currentUser.id };
+          const cleanTaskData = { ...taskData };
+          if (cleanTaskData.assigned_to === undefined) {
+              delete cleanTaskData.assigned_to;
+          }
+          if (cleanTaskData.due_date === undefined) {
+              delete cleanTaskData.due_date;
+          }
+
+          const newTaskPayload = { ...cleanTaskData, project_id: projectId, created_by: currentUser.id };
           const newTask = await api.addTask(newTaskPayload as Omit<Task, 'id' | 'created_at'>);
           // Increment task count locally
           setProjects(prevProjects =>
