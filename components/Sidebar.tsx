@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClipboardListIcon, UsersIcon, BuildingLibraryIcon, ChartPieIcon, Cog6ToothIcon, QuestionMarkCircleIcon, CalendarDaysIcon, UserCircleIcon } from './icons/Icons';
+import { ClipboardListIcon, UsersIcon, BuildingLibraryIcon, ChartPieIcon, Cog6ToothIcon, QuestionMarkCircleIcon, CalendarDaysIcon, UserCircleIcon, CheckCircleIcon } from './icons/Icons';
 import { useUI } from '../hooks/useUI';
 
 const Sidebar: React.FC = () => {
@@ -8,6 +8,7 @@ const Sidebar: React.FC = () => {
   const navItems = [
     { id: 'dashboard', icon: ChartPieIcon, label: 'Dashboard' },
     { id: 'projects', icon: ClipboardListIcon, label: 'Proyectos' },
+    { id: 'my-tasks', icon: CheckCircleIcon, label: 'Mis Tareas' },
     { id: 'calendar', icon: CalendarDaysIcon, label: 'Calendario' },
     { id: 'users', icon: UsersIcon, label: 'Usuarios' },
     { id: 'departments', icon: BuildingLibraryIcon, label: 'Departamentos' },

@@ -350,6 +350,17 @@ export const deleteTask = async (taskId: string): Promise<void> => {
     const { error } = await supabase.from('sub_tasks').delete().eq('id', taskId);
     if (error) throw error;
 };
+
+export const fetchUserTasks = async (userId: string): Promise<Task[]> => {
+    const { data, error } = await supabase
+        .from('sub_tasks')
+        .select('*')
+        .eq('assigned_to', userId)
+        .order('is_completed', { ascending: true })
+        .order('due_date', { ascending: true, nullsFirst: false });
+    if (error) throw error;
+    return data;
+};
 // --------------------
 
 

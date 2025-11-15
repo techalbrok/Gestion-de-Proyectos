@@ -14,8 +14,8 @@ const CalendarPage: React.FC = () => {
 
   const daysOfWeek = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-  const projectsWithDueDates = useMemo(() => {
-    return projects.filter(p => p.due_date);
+  const projectsWithDates = useMemo(() => {
+    return projects.filter(p => p.start_date || p.due_date);
   }, [projects]);
 
   const calendarGrid = useMemo(() => {
@@ -25,38 +25,47 @@ const CalendarPage: React.FC = () => {
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
 
-    const firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7; // 0=Monday, 6=Sunday
+    const firstDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
     const totalDays = lastDayOfMonth.getDate();
 
-    const grid: ({ day: number; date: Date; isCurrentMonth: boolean; projects: Project[] })[] = [];
-    
-    // Days from previous month
+    const grid: ({ day: number; date: Date; isCurrentMonth: boolean; projectRanges: Array<{project: Project, isStart: boolean, isEnd: boolean, isInRange: boolean}> })[] = [];
+
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const day = prevMonthLastDay - i;
       const date = new Date(year, month - 1, day);
-      grid.push({ day, date, isCurrentMonth: false, projects: [] });
+      grid.push({ day, date, isCurrentMonth: false, projectRanges: [] });
     }
 
-    // Days from current month
     for (let i = 1; i <= totalDays; i++) {
       const date = new Date(year, month, i);
-      const dayProjects = projectsWithDueDates.filter(p => {
-        const dueDate = new Date(p.due_date!);
-        return dueDate.getFullYear() === year && dueDate.getMonth() === month && dueDate.getDate() === i;
-      });
-      grid.push({ day: i, date, isCurrentMonth: true, projects: dayProjects });
+      const projectRanges = projectsWithDates.map(p => {
+        const startDate = new Date(p.start_date);
+        const endDate = p.due_date ? new Date(p.due_date) : startDate;
+
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        const currentDay = new Date(year, month, i);
+        currentDay.setHours(0, 0, 0, 0);
+
+        const isInRange = currentDay >= startDate && currentDay <= endDate;
+        const isStart = currentDay.getTime() === startDate.getTime();
+        const isEnd = currentDay.getTime() === endDate.getTime();
+
+        return { project: p, isStart, isEnd, isInRange };
+      }).filter(pr => pr.isInRange);
+
+      grid.push({ day: i, date, isCurrentMonth: true, projectRanges });
     }
 
-    // Days from next month
-    const remainingCells = 42 - grid.length; // 6 weeks * 7 days
+    const remainingCells = 42 - grid.length;
     for (let i = 1; i <= remainingCells; i++) {
       const date = new Date(year, month + 1, i);
-      grid.push({ day: i, date, isCurrentMonth: false, projects: [] });
+      grid.push({ day: i, date, isCurrentMonth: false, projectRanges: [] });
     }
-    
+
     return grid;
-  }, [currentDate, projectsWithDueDates]);
+  }, [currentDate, projectsWithDates]);
 
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -104,7 +113,7 @@ const CalendarPage: React.FC = () => {
           </div>
         ))}
 
-        {calendarGrid.slice(0, 42).map(({ day, date, isCurrentMonth, projects }, index) => {
+        {calendarGrid.slice(0, 42).map(({ day, date, isCurrentMonth, projectRanges }, index) => {
           const isToday = new Date().toDateString() === date.toDateString();
           return (
             <div key={index} className={`p-2 bg-white dark:bg-dark-card flex flex-col ${!isCurrentMonth ? 'opacity-50' : ''}`}>
@@ -112,15 +121,25 @@ const CalendarPage: React.FC = () => {
                 {day}
               </div>
               <div className="mt-1 space-y-1 overflow-y-auto">
-                {projects.map(p => {
+                {projectRanges.map(({ project: p, isStart, isEnd }) => {
                     const priorityConfig = PRIORITY_CONFIG[p.priority];
+                    const showLabel = isStart;
+                    const roundedLeft = isStart ? 'rounded-l-md' : '';
+                    const roundedRight = isEnd ? 'rounded-r-md' : '';
+
                     return (
-                        <div 
+                        <div
                             key={p.id}
                             onClick={() => handleProjectClick(p)}
-                            className={`p-1.5 rounded-md cursor-pointer hover:scale-105 hover:shadow-lg transition-all duration-200 ${priorityConfig.color}`}
+                            className={`p-1 cursor-pointer hover:brightness-110 transition-all duration-200 ${priorityConfig.color} ${roundedLeft} ${roundedRight}`}
+                            title={p.title}
                         >
-                            <p className={`text-xs font-semibold truncate ${priorityConfig.textColor}`}>{p.title}</p>
+                            {showLabel && (
+                                <p className={`text-xs font-semibold truncate ${priorityConfig.textColor}`}>{p.title}</p>
+                            )}
+                            {!showLabel && (
+                                <div className="h-4"></div>
+                            )}
                         </div>
                     )
                 })}

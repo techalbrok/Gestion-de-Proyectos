@@ -263,3 +263,30 @@ export const DownloadIcon: React.FC<IconProps> = (props) => (
     <line x1="12" x2="12" y1="15" y2="3" />
   </svg>
 );
+
+export const Squares2X2Icon: React.FC<IconProps> = (props) => (
+  <svg {...defaultProps} {...props}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+  </svg>
+);
+
+export const ListBulletIcon: React.FC<IconProps> = (props) => (
+  <svg {...defaultProps} {...props}>
+    <line x1="8" x2="21" y1="6" y2="6" />
+    <line x1="8" x2="21" y1="12" y2="12" />
+    <line x1="8" x2="21" y1="18" y2="18" />
+    <line x1="3" x2="3.01" y1="6" y2="6" />
+    <line x1="3" x2="3.01" y1="12" y2="12" />
+    <line x1="3" x2="3.01" y1="18" y2="18" />
+  </svg>
+);
+
+export const DocumentDuplicateIcon: React.FC<IconProps> = (props) => (
+  <svg {...defaultProps} {...props}>
+    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+  </svg>
+);

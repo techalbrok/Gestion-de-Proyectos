@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, Comment, User, UserRole, ProjectHistory, ProjectStage, Priority, Task } from '../types';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
-import { TrashIcon } from './icons/Icons';
+import { TrashIcon, DocumentDuplicateIcon } from './icons/Icons';
 import { projectSchema } from '../utils/validationSchemas';
 import { useZodForm } from '../hooks/useZodForm';
 import { useData } from '../hooks/useData';
@@ -23,7 +23,7 @@ interface ProjectModalProps {
 const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
   const { departments, users, userDepartments, addProject, updateProject, deleteProject, getComments, getHistory, getTasks } = useData();
   const { currentUser } = useAuth();
-  const { showConfirmation } = useUI();
+  const { showConfirmation, preselectedDepartmentId } = useUI();
   
   const [activeTab, setActiveTab] = useState('details');
   const [comments, setComments] = useState<Comment[]>([]);
@@ -52,14 +52,15 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
   }, [currentUser, departments, userDepartments]);
 
   const getInitialData = useCallback(() => {
-    // FIX: Use enums for stage and priority, and explicitly type members array to match Zod schema.
+    const defaultDepartmentId = preselectedDepartmentId || userVisibleDepartments[0]?.id || '';
+
     const defaultData = {
       title: '',
       description: '',
       stage: ProjectStage.PENDING,
       priority: Priority.MEDIUM,
       members: [] as string[],
-      department_id: userVisibleDepartments[0]?.id || '',
+      department_id: defaultDepartmentId,
       start_date: new Date().toISOString().split('T')[0],
       due_date: null,
     };
@@ -76,7 +77,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           members: project.members || [],
         }
       : defaultData;
-  }, [project, userVisibleDepartments]);
+  }, [project, userVisibleDepartments, preselectedDepartmentId]);
 
   const { formData, errors, handleChange, validate, setFormData, setField } = useZodForm(
     projectSchema,
@@ -113,7 +114,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
 
   const handleDelete = () => {
     if (!project) return;
-    
+
     showConfirmation({
         title: 'Eliminar Proyecto',
         message: `¿Estás seguro de que quieres eliminar el proyecto "${project.title}"? Todos los comentarios, historial y notificaciones asociados se borrarán permanentemente. Esta acción no se puede deshacer.`,
@@ -123,6 +124,24 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
             onClose();
         }
     });
+  };
+
+  const handleDuplicate = async () => {
+    if (!project) return;
+
+    const duplicatedProject = {
+      title: `${project.title} (Copia)`,
+      description: project.description,
+      department_id: project.department_id,
+      stage: ProjectStage.PENDING,
+      priority: project.priority,
+      start_date: new Date().toISOString().split('T')[0],
+      due_date: project.due_date,
+      members: project.members,
+    };
+
+    await addProject(duplicatedProject);
+    onClose();
   };
 
   const TabButton: React.FC<{tabName: string, label: string}> = ({tabName, label}) => (
@@ -186,12 +205,18 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
         )}
         
         <div className="mt-6 flex justify-between items-center">
-            <div>
+            <div className="flex space-x-2">
                 {project && canEditProject && (
-                    <Button variant="destructive" onClick={handleDelete}>
-                        <TrashIcon className="w-5 h-5 mr-2" />
-                        Eliminar Proyecto
-                    </Button>
+                    <>
+                        <Button variant="secondary" onClick={handleDuplicate}>
+                            <DocumentDuplicateIcon className="w-5 h-5 mr-2" />
+                            Duplicar
+                        </Button>
+                        <Button variant="destructive" onClick={handleDelete}>
+                            <TrashIcon className="w-5 h-5 mr-2" />
+                            Eliminar
+                        </Button>
+                    </>
                 )}
             </div>
             <div className="flex space-x-3">

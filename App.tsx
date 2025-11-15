@@ -8,6 +8,7 @@ import DepartmentsPage from './components/DepartmentsPage';
 import CalendarPage from './components/CalendarPage';
 import ProfilePage from './components/ProfilePage';
 import DepartmentProjectsPage from './components/DepartmentProjectsPage';
+import MyTasksPage from './components/MyTasksPage';
 import AuthPage from './components/AuthPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
 import { LoadingSpinner } from './components/icons/Icons';
@@ -43,6 +44,8 @@ const App: React.FC = () => {
         return <DepartmentProjectsPage />;
       case 'calendar':
         return <CalendarPage />;
+      case 'my-tasks':
+        return <MyTasksPage />;
       case 'profile':
         return <ProfilePage />;
       default:

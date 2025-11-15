@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Project, Comment, User } from '../types';
 import Avatar from './ui/Avatar';
-import Input from './ui/Input';
+import MentionInput from './MentionInput';
 import { PaperAirplaneIcon, LoadingSpinner } from './icons/Icons';
 import { useData } from '../hooks/useData';
 import { useAuth } from '../hooks/useAuth';
@@ -77,13 +77,14 @@ const ProjectCommentsTab: React.FC<ProjectCommentsTabProps> = ({ project, commen
             <div className="mt-4 flex items-center space-x-2">
                 <Avatar user={currentUser} size="md" />
                 <div className="relative flex-1">
-                    <Input
-                        placeholder="Escribe un comentario..."
+                    <MentionInput
                         value={newComment}
-                        onChange={e => setNewComment(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleAddComment()}
-                        className="pr-10"
+                        onChange={setNewComment}
+                        onSubmit={handleAddComment}
+                        users={users}
+                        placeholder="Escribe un comentario... (usa @ para mencionar)"
                         disabled={isSubmitting}
+                        className="pr-10"
                     />
                     <button
                         onClick={handleAddComment}

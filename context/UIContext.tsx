@@ -18,6 +18,8 @@ interface UIContextType {
   hideConfirmation: () => void;
   projectToOpen: string | null;
   setProjectToOpen: (projectId: string | null) => void;
+  preselectedDepartmentId: string | null;
+  setPreselectedDepartmentId: (departmentId: string | null) => void;
   theme: Theme;
   toggleTheme: () => void;
   isSidebarOpen: boolean;
@@ -34,6 +36,7 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [confirmation, setConfirmation] = useState<ConfirmationOptions | null>(null);
   const [projectToOpen, setProjectToOpen] = useState<string | null>(null);
+  const [preselectedDepartmentId, setPreselectedDepartmentId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => {
     // Default to light mode, only use dark if explicitly set in localStorage.
@@ -79,6 +82,7 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       toasts, addToast, removeToast,
       confirmation, showConfirmation, hideConfirmation,
       projectToOpen, setProjectToOpen,
+      preselectedDepartmentId, setPreselectedDepartmentId,
       theme, toggleTheme,
       isSidebarOpen, toggleSidebar, closeSidebar,
   }), [
@@ -88,6 +92,7 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     toasts, addToast, removeToast,
     confirmation, showConfirmation, hideConfirmation,
     projectToOpen,
+    preselectedDepartmentId,
     theme, toggleTheme,
     isSidebarOpen, toggleSidebar, closeSidebar
   ]);

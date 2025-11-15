@@ -3,16 +3,17 @@ import { Project } from '../types';
 import Avatar from './ui/Avatar';
 import Button from './ui/Button';
 import ProjectModal from './ProjectModal';
-import { ChevronLeftIcon, ClipboardListIcon, CheckCircleIcon, Cog6ToothIcon, UserGroupIcon } from './icons/Icons';
+import { ChevronLeftIcon, ClipboardListIcon, CheckCircleIcon, Cog6ToothIcon, UserGroupIcon, PlusIcon, DownloadIcon } from './icons/Icons';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from '../constants';
 import StatCard from './ui/StatCard';
 import { useData } from '../hooks/useData';
 import { useUI } from '../hooks/useUI';
+import { exportProjectsToCSV } from '../utils/csvExport';
 
 const DepartmentProjectsPage: React.FC = () => {
     const { departments, projects, users, userDepartments } = useData();
-    const { viewingDepartmentId, setView, setViewingDepartmentId } = useUI();
-    
+    const { viewingDepartmentId, setView, setViewingDepartmentId, setPreselectedDepartmentId } = useUI();
+
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -43,9 +44,22 @@ const DepartmentProjectsPage: React.FC = () => {
         setIsModalOpen(true);
     };
 
+    const handleCreateProject = () => {
+        setPreselectedDepartmentId(viewingDepartmentId);
+        setSelectedProject(null);
+        setIsModalOpen(true);
+    };
+
     const closeModal = () => {
         setIsModalOpen(false);
         setSelectedProject(null);
+        setPreselectedDepartmentId(null);
+    };
+
+    const handleExportCSV = () => {
+        const timestamp = new Date().toISOString().split('T')[0];
+        const deptName = department?.name.replace(/\s+/g, '-').toLowerCase() || 'department';
+        exportProjectsToCSV(departmentProjects, departments, `proyectos-${deptName}-${timestamp}.csv`);
     };
 
     if (!department) {
@@ -61,12 +75,23 @@ const DepartmentProjectsPage: React.FC = () => {
 
     return (
         <div className="p-6 flex flex-col h-full space-y-6">
-            {/* Header */}
             <div>
-                <Button onClick={handleBack} variant="secondary" className="mb-4">
-                    <ChevronLeftIcon className="w-5 h-5 mr-2" />
-                    Volver a Departamentos
-                </Button>
+                <div className="flex items-center justify-between mb-4">
+                    <Button onClick={handleBack} variant="secondary">
+                        <ChevronLeftIcon className="w-5 h-5 mr-2" />
+                        Volver a Departamentos
+                    </Button>
+                    <div className="flex items-center space-x-2">
+                        <Button variant="secondary" onClick={handleExportCSV} disabled={departmentProjects.length === 0}>
+                            <DownloadIcon className="w-5 h-5 mr-2" />
+                            Exportar CSV
+                        </Button>
+                        <Button onClick={handleCreateProject}>
+                            <PlusIcon className="w-5 h-5 mr-2" />
+                            Crear Proyecto
+                        </Button>
+                    </div>
+                </div>
                 <div className="p-6 bg-white dark:bg-dark-card rounded-lg shadow-sm">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white font-heading">{department.name}</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-2">{department.description}</p>
