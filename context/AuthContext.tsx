@@ -3,7 +3,6 @@ import { User } from '../types';
 import * as api from '../services/api';
 import { supabase } from '../services/supabase';
 import { Session } from '@supabase/supabase-js';
-import { useUI } from '../hooks/useUI';
 
 type AuthView = 'signin' | 'forgot-password';
 
@@ -18,6 +17,7 @@ interface AuthContextType {
   setAuthView: (view: AuthView) => void;
   requestPasswordReset: (email: string) => Promise<void>;
   setCurrentUser: (user: User | null) => void;
+  authToasts: Array<{id: string, message: string, type: 'success' | 'error'}>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,9 +28,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<AuthView>('signin');
   const [loading, setLoading] = useState(true);
+  const [toasts, setToasts] = useState<Array<{id: string, message: string, type: 'success' | 'error'}>>([]);
 
-  // We need addToast for login/logout messages
-  const { addToast } = useUI();
+  const addToast = useCallback((message: string, type: 'success' | 'error') => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setToasts(prev => [...prev, { id, message, type }]);
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, 5000);
+  }, []);
 
   const handleLogoutAndError = useCallback(async (errorMessage: string) => {
       addToast(errorMessage, 'error');
@@ -133,7 +140,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     session, currentUser, isAuthenticated,
     login, logout, register, requestPasswordReset,
     authView, setAuthView,
-    setCurrentUser
+    setCurrentUser,
+    authToasts: toasts
   }), [session, currentUser, isAuthenticated, login, logout, register, requestPasswordReset, authView]);
 
   if (loading) {

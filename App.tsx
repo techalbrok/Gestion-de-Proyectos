@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const { isAuthenticated, authView } = useAuth();
   const { loading } = useData();
   const { view, toasts, removeToast, confirmation, hideConfirmation, isSidebarOpen, closeSidebar } = useUI();
+  const { authToasts } = useAuth();
 
   if (!isAuthenticated) {
     if (authView === 'forgot-password') {
@@ -80,6 +81,16 @@ const App: React.FC = () => {
         className="fixed inset-0 flex items-end px-4 py-6 pointer-events-none sm:p-6 sm:items-start z-[100]"
       >
         <div className="w-full flex flex-col items-center space-y-4 sm:items-end">
+          {/* Auth toasts for login/logout messages */}
+          {authToasts && authToasts.map((toast) => (
+            <Toast
+              key={toast.id}
+              id={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onClose={() => {}} // Auth toasts auto-remove
+            />
+          ))}
           {toasts.map((toast) => (
             <Toast
               key={toast.id}
