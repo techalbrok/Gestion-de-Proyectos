@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Avatar from './ui/Avatar';
-import { CameraIcon, LoadingSpinner } from './icons/Icons';
+import { CameraIcon, LoadingSpinner, UserCircleIcon } from './icons/Icons';
 import { profileSchema } from '../utils/validationSchemas';
 import { useZodForm } from '../hooks/useZodForm';
 import { useAuth } from '../hooks/useAuth';
