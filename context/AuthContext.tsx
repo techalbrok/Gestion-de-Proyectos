@@ -71,6 +71,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
+        // Clear any invalid session data
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error("Error signing out during init:", signOutError);
+        }
         if (mounted) {
           setSession(null);
           setCurrentUser(null);
@@ -89,6 +95,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       (async () => {
         if (!mounted) return;
 
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log("Token refresh failed, clearing session");
+          setSession(null);
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+          return;
+        }
+
         if (session) {
           setSession(session);
           try {
@@ -99,7 +114,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
           } catch (error) {
             console.error("Error loading profile on auth change:", error);
+            // Clear invalid session
+            try {
+              await supabase.auth.signOut();
+            } catch (signOutError) {
+              console.error("Error signing out on auth change:", signOutError);
+            }
             if (mounted) {
+              setSession(null);
               setCurrentUser(null);
               setIsAuthenticated(false);
             }
