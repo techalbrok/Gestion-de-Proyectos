@@ -1,36 +1,17 @@
-
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import { Project } from '../types';
 import Avatar from './ui/Avatar';
 import Button from './ui/Button';
 import ProjectModal from './ProjectModal';
 import { ChevronLeftIcon, ClipboardListIcon, CheckCircleIcon, Cog6ToothIcon, UserGroupIcon } from './icons/Icons';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from '../constants';
-
-const StatCard: React.FC<{title: string, value: string | number, icon: React.ElementType}> = ({ title, value, icon: Icon }) => (
-    <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-sm flex items-center space-x-4">
-        <div className="bg-red-100 dark:bg-primary/20 p-3 rounded-full">
-            <Icon className="w-6 h-6 text-primary dark:text-red-300" />
-        </div>
-        <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-        </div>
-    </div>
-);
-
+import StatCard from './ui/StatCard';
+import { useData } from '../hooks/useData';
+import { useUI } from '../hooks/useUI';
 
 const DepartmentProjectsPage: React.FC = () => {
-    const { 
-        viewingDepartmentId, 
-        departments, 
-        projects, 
-        users, 
-        setView, 
-        setViewingDepartmentId,
-        userDepartments,
-    } = useAppContext();
+    const { departments, projects, users, userDepartments } = useData();
+    const { viewingDepartmentId, setView, setViewingDepartmentId } = useUI();
     
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,7 +58,6 @@ const DepartmentProjectsPage: React.FC = () => {
     }
     
     const coordinator = users.find(u => u.id === department.coordinator_id);
-    const coordinator = users.find(u => u.id === department.coordinator);
 
     return (
         <div className="p-6 flex flex-col h-full space-y-6">
@@ -102,10 +82,10 @@ const DepartmentProjectsPage: React.FC = () => {
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Proyectos Totales" value={departmentStats.total} icon={ClipboardListIcon} />
-                <StatCard title="En Progreso" value={departmentStats.inProgress} icon={Cog6ToothIcon} />
-                <StatCard title="Completados" value={departmentStats.completed} icon={CheckCircleIcon} />
-                <StatCard title="Miembros" value={departmentStats.memberCount} icon={UserGroupIcon} />
+                <StatCard title="Proyectos Totales" value={departmentStats.total} icon={ClipboardListIcon} variant="department" />
+                <StatCard title="En Progreso" value={departmentStats.inProgress} icon={Cog6ToothIcon} variant="department" />
+                <StatCard title="Completados" value={departmentStats.completed} icon={CheckCircleIcon} variant="department" />
+                <StatCard title="Miembros" value={departmentStats.memberCount} icon={UserGroupIcon} variant="department" />
             </div>
             
             {/* Projects Table */}

@@ -1,17 +1,21 @@
-
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import { BellIcon, SearchIcon, ChevronDownIcon, UserCircleIcon, ArrowRightOnRectangleIcon, Bars3Icon } from './icons/Icons';
 import Avatar from './ui/Avatar';
 import GlobalSearchResults from './GlobalSearchResults';
 import { Project, Department, User } from '../types';
 import ThemeToggle from './ui/ThemeToggle';
 import NotificationsPanel from './NotificationsPanel';
+import { useAuth } from '../hooks/useAuth';
+import { useUI } from '../hooks/useUI';
+import { useData } from '../hooks/useData';
 
 type SearchResult = (Project & { type: 'project' }) | (Department & { type: 'department' }) | (User & { type: 'user' });
 
 const Header: React.FC = () => {
-  const { currentUser, setView, logout, projects, departments, users, toggleSidebar, notifications, markAllNotificationsAsRead } = useAppContext();
+  const { currentUser, logout } = useAuth();
+  const { setView, toggleSidebar } = useUI();
+  const { projects, departments, users, notifications, markAllNotificationsAsRead } = useData();
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

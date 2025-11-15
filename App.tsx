@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -11,13 +10,17 @@ import ProfilePage from './components/ProfilePage';
 import DepartmentProjectsPage from './components/DepartmentProjectsPage';
 import AuthPage from './components/AuthPage';
 import ForgotPasswordPage from './components/ForgotPasswordPage';
-import { useAppContext } from './hooks/useAppContext';
 import { LoadingSpinner } from './components/icons/Icons';
 import Toast from './components/ui/Toast';
 import ConfirmationModal from './components/ui/ConfirmationModal';
+import { useAuth } from './hooks/useAuth';
+import { useData } from './hooks/useData';
+import { useUI } from './hooks/useUI';
 
 const App: React.FC = () => {
-  const { loading, view, isAuthenticated, authView, toasts, removeToast, confirmation, hideConfirmation, isSidebarOpen, closeSidebar } = useAppContext();
+  const { isAuthenticated, authView } = useAuth();
+  const { loading } = useData();
+  const { view, toasts, removeToast, confirmation, hideConfirmation, isSidebarOpen, closeSidebar } = useUI();
 
   if (!isAuthenticated) {
     if (authView === 'forgot-password') {

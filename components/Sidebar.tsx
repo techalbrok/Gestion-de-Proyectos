@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { ClipboardListIcon, UsersIcon, BuildingLibraryIcon, ChartPieIcon, Cog6ToothIcon, QuestionMarkCircleIcon, CalendarDaysIcon, UserCircleIcon } from './icons/Icons';
-import { useAppContext } from '../hooks/useAppContext';
+import { useUI } from '../hooks/useUI';
 
 const Sidebar: React.FC = () => {
-  const { view, setView, isSidebarOpen, closeSidebar } = useAppContext();
+  const { view, setView, isSidebarOpen, closeSidebar } = useUI();
 
   const navItems = [
     { id: 'dashboard', icon: ChartPieIcon, label: 'Dashboard' },
@@ -16,8 +15,6 @@ const Sidebar: React.FC = () => {
 
   const secondaryNavItems = [
     { id: 'profile', icon: UserCircleIcon, label: 'Mi Perfil' },
-    { id: 'settings', icon: Cog6ToothIcon, label: 'Configuración' },
-    { id: 'help', icon: QuestionMarkCircleIcon, label: 'Ayuda' },
   ];
 
   const handleLinkClick = (id: string) => {

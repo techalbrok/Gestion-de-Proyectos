@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import { Department } from '../types';
 import Button from './ui/Button';
 import Avatar from './ui/Avatar';
 import { PlusIcon, PencilIcon, TrashIcon, UserGroupIcon, ClipboardListIcon, BuildingLibraryIcon } from './icons/Icons';
 import DepartmentModal from './DepartmentModal';
 import EmptyState from './ui/EmptyState';
+import { useData } from '../hooks/useData';
+import { useUI } from '../hooks/useUI';
 
 const DepartmentsPage: React.FC = () => {
-    const { departments, users, userDepartments, deleteDepartment, setView, setViewingDepartmentId, showConfirmation } = useAppContext();
+    const { departments, users, userDepartments, deleteDepartment } = useData();
+    const { setView, setViewingDepartmentId, showConfirmation } = useUI();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDept, setSelectedDept] = useState<Department | null>(null);
 
@@ -43,7 +45,7 @@ const DepartmentsPage: React.FC = () => {
 
     const departmentData = useMemo(() => {
         return departments.map(dept => {
-            const coordinator = users.find(u => u.id === dept.coordinator);
+            const coordinator = users.find(u => u.id === dept.coordinator_id);
             const memberCount = userDepartments.filter(ud => ud.department_id === dept.id).length;
             return { ...dept, coordinator, memberCount };
         });

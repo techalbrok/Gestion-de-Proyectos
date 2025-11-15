@@ -1,43 +1,31 @@
-
 import React, { useState } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import { LoadingSpinner } from './icons/Icons';
 import { loginSchema } from '../utils/validationSchemas';
+import { useZodForm } from '../hooks/useZodForm';
+import AuthHeader from './ui/AuthHeader';
+import { useAuth } from '../hooks/useAuth';
 
 const AuthPage: React.FC = () => {
-    const { login, setAuthView } = useAppContext();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const { login, setAuthView } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string | undefined>>({});
-
-    const validateAndSetErrors = (schema: any, data: any) => {
-        const result = schema.safeParse(data);
-        if (!result.success) {
-            const formattedErrors = result.error.flatten().fieldErrors;
-            const errorMap: Record<string, string> = {};
-            for (const key in formattedErrors) {
-                errorMap[key] = formattedErrors[key as keyof typeof formattedErrors]?.[0] || 'Error';
-            }
-            setErrors(errorMap);
-            return false;
-        }
-        setErrors({});
-        return true;
-    }
+    
+    const { formData, errors, handleChange, validate } = useZodForm(loginSchema, {
+      email: '',
+      password: '',
+    });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!validateAndSetErrors(loginSchema, { email, password })) {
+        if (!validate()) {
             return;
         }
         
         setIsLoading(true);
         try {
-            await login(email, password);
+            await login(formData.email, formData.password);
         } catch (err: any) {
             // Error is handled by the toast in context.
         } finally {
@@ -48,21 +36,15 @@ const AuthPage: React.FC = () => {
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-dark-bg">
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md dark:bg-dark-card">
-                <div className="text-center">
-                    <img src="/images/logo_albrok_rojo_transp.png" alt="Albroxfera Logo" className="w-40 mx-auto mb-4 block dark:hidden" />
-                    <img src="/images/logo_albrok_blanco_transp.png" alt="Albroxfera Logo" className="w-40 mx-auto mb-4 hidden dark:block" />
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
-                        Gestión de Proyectos
-                    </h1>
-                </div>
+                <AuthHeader title="Gestión de Proyectos" />
 
                 <form className="space-y-6" onSubmit={handleSubmit} noValidate>
                     <Input
                         label="Correo Electrónico"
                         name="email"
                         type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        value={formData.email}
+                        onChange={handleChange}
                         placeholder="tu@email.com"
                         error={errors.email}
                     />
@@ -71,8 +53,8 @@ const AuthPage: React.FC = () => {
                             label="Contraseña"
                             name="password"
                             type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={formData.password}
+                            onChange={handleChange}
                             placeholder="********"
                             error={errors.password}
                         />

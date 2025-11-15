@@ -10,7 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
   <script>
     // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    // Force light mode by default, only apply dark if explicitly set in localStorage
+    if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
@@ -37,10 +38,10 @@
   </script>
   <style>
     body {
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Montserrat', 'sans-serif';
     }
     h1, h2, h3, h4, h5, h6, .font-heading {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Poppins', 'sans-serif';
       font-weight: 600;
     }
   </style>

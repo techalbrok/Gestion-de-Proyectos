@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Department, User } from '../types';
-import { useAppContext } from '../hooks/useAppContext';
+import { Department } from '../types';
 import Modal from './ui/Modal';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import Select from './ui/Select';
 import Avatar from './ui/Avatar';
 import { departmentSchema } from '../utils/validationSchemas';
+import { useZodForm } from '../hooks/useZodForm';
+import { useData } from '../hooks/useData';
 
 interface DepartmentModalProps {
   department: Department | null;
@@ -14,37 +15,35 @@ interface DepartmentModalProps {
 }
 
 const DepartmentModal: React.FC<DepartmentModalProps> = ({ department, onClose }) => {
-    const { addDepartment, updateDepartment, users, userDepartments, updateDepartmentMembers } = useAppContext();
-    const [formData, setFormData] = useState<Partial<Department>>({});
+    const { addDepartment, updateDepartment, users, userDepartments, updateDepartmentMembers } = useData();
     const [memberIds, setMemberIds] = useState<Set<string>>(new Set());
-    const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+    
+    const { formData, errors, handleChange, validate, setFormData } = useZodForm(
+        departmentSchema,
+        {
+            name: department?.name || '',
+            description: department?.description || '',
+            coordinator_id: department?.coordinator_id || '',
+        }
+    );
 
     useEffect(() => {
         if (department) {
-            setFormData(department);
+            setFormData({
+                name: department.name,
+                description: department.description,
+                coordinator_id: department.coordinator_id,
+            });
             const currentMembers = userDepartments
                 .filter(ud => ud.department_id === department.id)
                 .map(ud => ud.user_id);
             setMemberIds(new Set(currentMembers));
         } else {
-            setFormData({
-                name: '',
-                description: '',
-                coordinator: '',
-            });
+            setFormData({ name: '', description: '', coordinator_id: '' });
             setMemberIds(new Set());
         }
-        setErrors({});
-    }, [department, userDepartments]);
+    }, [department, userDepartments, setFormData]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: undefined }));
-        }
-    };
-    
     const handleMemberToggle = (userId: string) => {
         setMemberIds(prev => {
             const newSet = new Set(prev);
@@ -58,19 +57,10 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({ department, onClose }
     };
 
     const handleSave = async () => {
-        const validationResult = departmentSchema.safeParse(formData);
-        if (!validationResult.success) {
-            const formattedErrors = validationResult.error.flatten().fieldErrors;
-            const errorMap: Record<string, string> = {};
-            for (const key in formattedErrors) {
-                errorMap[key] = formattedErrors[key as keyof typeof formattedErrors]?.[0] || 'Error';
-            }
-            setErrors(errorMap);
-            return;
-        }
+        if (!validate()) return;
         
         if (department) {
-            await updateDepartment(formData as Department);
+            await updateDepartment({ ...department, ...formData });
             await updateDepartmentMembers(department.id, Array.from(memberIds));
         } else {
             const newDept = await addDepartment(formData as Omit<Department, 'id'>);
@@ -108,8 +98,8 @@ const DepartmentModal: React.FC<DepartmentModalProps> = ({ department, onClose }
                 </div>
                 <Select
                     label="Coordinador"
-                    name="coordinator"
-                    value={formData.coordinator || ''}
+                    name="coordinator_id"
+                    value={formData.coordinator_id || ''}
                     onChange={handleChange}
                 >
                     <option value="">Sin coordinador</option>

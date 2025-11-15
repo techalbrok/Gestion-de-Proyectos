@@ -1,10 +1,10 @@
 import React from 'react';
 import { Notification, NotificationType } from '../types';
-import { useAppContext } from '../hooks/useAppContext';
 import Avatar from './ui/Avatar';
 // FIX: Removed ArrowUpRightIcon which is not exported, and other unused icons.
 import { BellIcon } from './icons/Icons';
 import { STAGE_CONFIG } from '../constants';
+import { useUI } from '../hooks/useUI';
 
 interface NotificationsPanelProps {
   notifications: Notification[];
@@ -27,7 +27,7 @@ const timeSince = (date: string): string => {
 }
 
 const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications, onClose }) => {
-    const { setView, setProjectToOpen } = useAppContext();
+    const { setView, setProjectToOpen } = useUI();
 
     const handleNotificationClick = (notification: Notification) => {
         setView('projects');

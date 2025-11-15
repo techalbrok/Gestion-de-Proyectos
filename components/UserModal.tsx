@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { User, UserRole } from '../types';
-import { useAppContext } from '../hooks/useAppContext';
 import Modal from './ui/Modal';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import Select from './ui/Select';
 import { userSchema } from '../utils/validationSchemas';
+import { useZodForm } from '../hooks/useZodForm';
+import { useData } from '../hooks/useData';
 
 interface UserModalProps {
   user: User;
@@ -13,36 +14,16 @@ interface UserModalProps {
 }
 
 const UserModal: React.FC<UserModalProps> = ({ user, onClose }) => {
-    const { updateUser } = useAppContext();
-    const [formData, setFormData] = useState<Partial<User>>(user);
-    const [errors, setErrors] = useState<Record<string, string | undefined>>({});
-
-    useEffect(() => {
-        setFormData(user);
-        setErrors({});
-    }, [user]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: undefined }));
-        }
-    };
+    const { updateUser } = useData();
+    const { formData, errors, handleChange, validate } = useZodForm(userSchema, {
+        full_name: user.full_name,
+        role: user.role,
+    });
 
     const handleSave = async () => {
-        const validationResult = userSchema.safeParse(formData);
-        if (!validationResult.success) {
-            const formattedErrors = validationResult.error.flatten().fieldErrors;
-            const errorMap: Record<string, string> = {};
-            for (const key in formattedErrors) {
-                errorMap[key] = formattedErrors[key as keyof typeof formattedErrors]?.[0] || 'Error';
-            }
-            setErrors(errorMap);
-            return;
-        }
+        if (!validate()) return;
 
-        await updateUser(formData as User);
+        await updateUser({ ...user, ...formData });
         onClose();
     };
 
@@ -61,7 +42,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, onClose }) => {
                     label="Email"
                     name="email"
                     type="email"
-                    value={formData.email || ''}
+                    value={user.email || ''}
                     disabled
                 />
                 <Select

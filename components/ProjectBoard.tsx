@@ -1,7 +1,5 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Project, ProjectStage, UserRole } from '../types';
-import { useAppContext } from '../hooks/useAppContext';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from '../constants';
 import ProjectColumn from './ProjectColumn';
 import ProjectModal from './ProjectModal';
@@ -9,9 +7,15 @@ import Button from './ui/Button';
 import Select from './ui/Select';
 import { PlusIcon, FunnelIcon, ArchiveIcon, DocumentPlusIcon } from './icons/Icons';
 import EmptyState from './ui/EmptyState';
+import { useData } from '../hooks/useData';
+import { useAuth } from '../hooks/useAuth';
+import { useUI } from '../hooks/useUI';
 
 const ProjectBoard: React.FC = () => {
-  const { projects, updateProjectStage, currentUser, userDepartments, departments, users, initialDepartmentFilter, setInitialDepartmentFilter, projectToOpen, setProjectToOpen } = useAppContext();
+  const { projects, updateProjectStage, userDepartments, departments, users, loadArchivedProjects, archivedProjectsLoaded } = useData();
+  const { currentUser } = useAuth();
+  const { initialDepartmentFilter, setInitialDepartmentFilter, projectToOpen, setProjectToOpen } = useUI();
+
   const [draggedItem, setDraggedItem] = useState<Project | null>(null);
   const [dragOverStage, setDragOverStage] = useState<ProjectStage | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -32,6 +36,12 @@ const ProjectBoard: React.FC = () => {
       setProjectToOpen(null); // Reset after opening
     }
   }, [projectToOpen, projects, setProjectToOpen]);
+  
+  useEffect(() => {
+    if (showArchived && !archivedProjectsLoaded) {
+      loadArchivedProjects();
+    }
+  }, [showArchived, archivedProjectsLoaded, loadArchivedProjects]);
 
   useEffect(() => {
     if (initialDepartmentFilter) {
@@ -127,7 +137,7 @@ const ProjectBoard: React.FC = () => {
     );
   }, [showArchived]);
 
-  if (projects.length === 0 && !isModalOpen) {
+  if (projects.length === 0 && !isModalOpen && !archivedProjectsLoaded) {
     return (
         <div className="flex items-center justify-center h-full p-6">
             <EmptyState

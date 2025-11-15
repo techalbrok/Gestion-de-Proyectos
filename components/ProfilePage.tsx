@@ -1,33 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
-import { User } from '../types';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Avatar from './ui/Avatar';
 import { CameraIcon, LoadingSpinner } from './icons/Icons';
 import { profileSchema } from '../utils/validationSchemas';
+import { useZodForm } from '../hooks/useZodForm';
+import { useAuth } from '../hooks/useAuth';
+import { useData } from '../hooks/useData';
+import { useUI } from '../hooks/useUI';
 
 const ProfilePage: React.FC = () => {
-    const { currentUser, updateUser, uploadUserAvatar, addToast } = useAppContext();
-    const [formData, setFormData] = useState<Partial<User>>({});
+    const { currentUser } = useAuth();
+    const { updateUser, uploadUserAvatar } = useData();
+    const { addToast } = useUI();
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string | undefined>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const { formData, errors, handleChange, validate, setFormData } = useZodForm(
+        profileSchema,
+        { full_name: currentUser?.full_name || '' }
+    );
 
     useEffect(() => {
         if (currentUser) {
-            setFormData(currentUser);
+            setFormData({ full_name: currentUser.full_name });
         }
-    }, [currentUser]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: undefined }));
-        }
-    };
+    }, [currentUser, setFormData]);
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -59,21 +58,9 @@ const ProfilePage: React.FC = () => {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!currentUser) return;
-
-        const validationResult = profileSchema.safeParse(formData);
-        if (!validationResult.success) {
-            const formattedErrors = validationResult.error.flatten().fieldErrors;
-            const errorMap: Record<string, string> = {};
-            for (const key in formattedErrors) {
-                errorMap[key] = formattedErrors[key as keyof typeof formattedErrors]?.[0] || 'Error';
-            }
-            setErrors(errorMap);
-            return;
-        }
-
+        if (!currentUser || !validate()) return;
+        
         setIsSaving(true);
-        setErrors({});
         try {
             await updateUser({ ...currentUser, ...formData });
         } catch (error) {
@@ -95,7 +82,7 @@ const ProfilePage: React.FC = () => {
                 <form onSubmit={handleSave} className="space-y-6">
                     <div className="flex items-center space-x-6">
                         <div className="relative">
-                            <Avatar user={formData as User} size="lg" />
+                            <Avatar user={currentUser} size="lg" />
                             {isUploading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
                                     <LoadingSpinner className="w-8 h-8"/>
@@ -133,7 +120,7 @@ const ProfilePage: React.FC = () => {
                             label="Email"
                             name="email"
                             type="email"
-                            value={formData.email || ''}
+                            value={currentUser.email || ''}
                             disabled
                             className="bg-gray-100 dark:bg-dark-bg/50"
                         />

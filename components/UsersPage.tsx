@@ -1,13 +1,12 @@
-
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import { User, UserRole } from '../types';
 import Avatar from './ui/Avatar';
 import { PencilIcon, SearchIcon, UsersIcon, ShieldCheckIcon } from './icons/Icons';
 import UserModal from './UserModal';
+import { useData } from '../hooks/useData';
 
 const UsersPage: React.FC = () => {
-    const { users, departments, userDepartments } = useAppContext();
+    const { users, departments, userDepartments } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [searchTerm, setSearchTerm] = useState('');

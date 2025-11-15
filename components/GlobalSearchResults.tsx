@@ -1,8 +1,7 @@
-
 import React from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import { Project, Department, User } from '../types';
 import { ClipboardListIcon, BuildingLibraryIcon, UsersIcon } from './icons/Icons';
+import { useUI } from '../hooks/useUI';
 
 type SearchResult = (Project & { type: 'project' }) | (Department & { type: 'department' }) | (User & { type: 'user' });
 
@@ -35,7 +34,7 @@ const Highlight: React.FC<{ text: string; highlight: string }> = ({ text, highli
 
 
 const GlobalSearchResults: React.FC<GlobalSearchResultsProps> = ({ results, query, onClose }) => {
-  const { setView, setProjectToOpen, setViewingDepartmentId } = useAppContext();
+  const { setView, setProjectToOpen, setViewingDepartmentId } = useUI();
 
   const handleProjectClick = (projectId: string) => {
     setView('projects');

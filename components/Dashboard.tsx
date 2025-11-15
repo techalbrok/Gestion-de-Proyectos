@@ -1,30 +1,11 @@
-
 import React from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import { ProjectStage, Priority, Project, ProjectHistory } from '../types';
 import { ClipboardListIcon, Cog6ToothIcon, CheckCircleIcon, ExclamationTriangleIcon, ClockIcon, UsersIcon } from './icons/Icons';
 import Avatar from './ui/Avatar';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from '../constants';
 import { useMemo } from 'react';
-
-interface StatCardProps {
-  title: string;
-  value: number;
-  icon: React.ElementType;
-  color: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color }) => (
-  <div className="bg-white dark:bg-dark-card p-6 rounded-lg shadow-md flex items-center justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-    <div>
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-      <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
-    </div>
-    <div className={`p-3 rounded-full ${color}`}>
-      <Icon className="w-6 h-6 text-white" />
-    </div>
-  </div>
-);
+import StatCard from './ui/StatCard';
+import { useData } from '../hooks/useData';
 
 interface ProgressInfo {
   label: string;
@@ -54,7 +35,7 @@ const ProgressSection: React.FC<{ title: string; data: ProgressInfo[] }> = ({ ti
 
 
 const Dashboard: React.FC = () => {
-  const { projects, users, recentHistory } = useAppContext();
+  const { projects, users, recentHistory } = useData();
 
   const projectStats = useMemo(() => {
     const total = projects.length;

@@ -1,6 +1,5 @@
-import { Project, User, Department, UserRole, ProjectStage, Priority, Comment, ProjectHistory, UserDepartment, RecentHistoryEntry, Notification, NotificationType } from '../types';
+import { Project, User, Department, UserRole, ProjectStage, Priority, Comment, ProjectHistory, UserDepartment, RecentHistoryEntry, Notification, NotificationType, Task } from '../types';
 import { supabase } from './supabase';
-// FIX: Import STAGE_CONFIG from constants to use in notifications.
 import { STAGE_CONFIG } from '../constants';
 
 // --- AUTH FUNCTIONS ---
@@ -39,36 +38,61 @@ export const requestPasswordReset = async (email: string) => {
 };
 
 
-export const fetchUserProfile = async (userId: string): Promise<User | null> => {
+export const fetchUserProfile = async (userId: string): Promise<User> => {
     const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
-    if (error) {
-        console.error('Error fetching user profile', error);
-        return null;
+    if (error || !data) {
+        console.error('Error fetching user profile. User may not have a public profile entry.', error);
+        throw error || new Error('User profile not found.');
     }
     return data;
 }
 
 // --- DATA FETCHING FUNCTIONS ---
+// Fetches only active projects for faster initial load.
 export const fetchProjects = async (): Promise<Project[]> => {
-    // The type assertion is needed because Supabase type generator won't know about the count
-    const { data, error } = await supabase.from('projects').select('*, comments(count)');
+    const { data, error } = await supabase
+        .from('projects')
+        .select('*, comments!project_id(count), tasks!project_id(count)')
+        .not('stage', 'in', `(${ProjectStage.COMPLETED},${ProjectStage.CANCELLED})`);
+
     if (error) throw error;
     
-    // Process the data to flatten the comment count
     return (data as any[]).map(p => ({ 
         ...p,
         comments_count: p.comments[0]?.count || 0,
-        comments: undefined, // Remove the original comments array
-        history: [] // history will be fetched on demand
+        tasks_count: p.tasks[0]?.count || 0,
+        comments: undefined,
+        tasks: undefined,
+        history: []
     }));
 };
+
+// Fetches archived projects on demand.
+export const fetchArchivedProjects = async (): Promise<Project[]> => {
+    const { data, error } = await supabase
+        .from('projects')
+        .select('*, comments!project_id(count), tasks!project_id(count)')
+        .in('stage', [ProjectStage.COMPLETED, ProjectStage.CANCELLED]);
+
+    if (error) throw error;
+
+    return (data as any[]).map(p => ({
+        ...p,
+        comments_count: p.comments[0]?.count || 0,
+        tasks_count: p.tasks[0]?.count || 0,
+        comments: undefined,
+        tasks: undefined,
+        history: []
+    }));
+};
+
 export const fetchUsers = async (): Promise<User[]> => {
     const { data, error } = await supabase.from('users').select('*');
     if (error) throw error;
     return data;
 };
 export const fetchDepartments = async (): Promise<Department[]> => {
-    const { data, error } = await supabase.from('departments').select('id, name, description, coordinator');
+    const { data, error } = await supabase.from('departments').select('*');
     if (error) throw error;
     return data;
 };
@@ -115,9 +139,15 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
 
 
 // --- DATA MUTATION FUNCTIONS ---
-export const updateProjectStage = async (projectId: string, newStage: ProjectStage, userId: string): Promise<Project> => {
-    const { data: projectBeforeUpdate, error: findError } = await supabase.from('projects').select('stage, members').eq('id', projectId).single();
+export const updateProjectStage = async (projectId: string, newStage: ProjectStage, currentUser: User, userDepartments: UserDepartment[]): Promise<Project> => {
+    const { data: projectBeforeUpdate, error: findError } = await supabase.from('projects').select('stage, members, department_id').eq('id', projectId).single();
     if(findError) throw findError;
+    
+    // Frontend permission check
+    const canEdit = currentUser.role === UserRole.ADMIN || userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === projectBeforeUpdate.department_id);
+    if (!canEdit) {
+        throw new Error("No tienes permiso para editar este proyecto.");
+    }
 
     const { data, error } = await supabase.from('projects').update({ stage: newStage }).eq('id', projectId).select().single();
     if (error) throw error;
@@ -125,7 +155,7 @@ export const updateProjectStage = async (projectId: string, newStage: ProjectSta
     // Log history
     const historyEntry = {
         project_id: projectId,
-        changed_by: userId,
+        changed_by: currentUser.id,
         previous_stage: projectBeforeUpdate.stage,
         new_stage: newStage,
     }
@@ -135,10 +165,10 @@ export const updateProjectStage = async (projectId: string, newStage: ProjectSta
     // Create notifications for members
     if (projectBeforeUpdate.members && projectBeforeUpdate.members.length > 0) {
         const notifications = projectBeforeUpdate.members
-            .filter((memberId: string) => memberId !== userId) // Don't notify the actor
+            .filter((memberId: string) => memberId !== currentUser.id) // Don't notify the actor
             .map((memberId: string) => ({
                 user_id: memberId,
-                actor_id: userId,
+                actor_id: currentUser.id,
                 project_id: projectId,
                 type: NotificationType.STAGE_CHANGE,
                 comment_preview: STAGE_CONFIG[newStage].title // Use comment_preview to store stage title
@@ -151,7 +181,7 @@ export const updateProjectStage = async (projectId: string, newStage: ProjectSta
     return { ...data, history: [] };
 };
 
-export const addProject = async (projectData: Omit<Project, 'id' | 'created_by' | 'history' | 'comments_count'>, userId: string): Promise<Project> => {
+export const addProject = async (projectData: Omit<Project, 'id' | 'created_by' | 'history' | 'comments_count' | 'tasks_count'>, userId: string): Promise<Project> => {
     const projectToInsert = { ...projectData, created_by: userId };
     const { data, error } = await supabase.from('projects').insert(projectToInsert).select().single();
     if (error) throw error;
@@ -177,11 +207,17 @@ export const addProject = async (projectData: Omit<Project, 'id' | 'created_by' 
         await supabase.from('notifications').insert(notifications);
     }
 
-    return { ...data, history: [], comments_count: 0 };
+    return { ...data, history: [], comments_count: 0, tasks_count: 0 };
 };
 
-export const updateProject = async (projectData: Project): Promise<Project> => {
-    const { id, history, comments_count, ...updateData } = projectData;
+export const updateProject = async (projectData: Project, currentUser: User, userDepartments: UserDepartment[]): Promise<Project> => {
+    // Frontend permission check
+    const canEdit = currentUser.role === UserRole.ADMIN || userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === projectData.department_id);
+    if (!canEdit) {
+        throw new Error("No tienes permiso para editar este proyecto.");
+    }
+    
+    const { id, history, comments_count, tasks_count, ...updateData } = projectData;
     
     const { data: projectBeforeUpdate, error: findError } = await supabase.from('projects').select('members').eq('id', id).single();
     if(findError) throw findError;
@@ -195,11 +231,10 @@ export const updateProject = async (projectData: Project): Promise<Project> => {
     const newlyAddedMembers = [...newMembers].filter(memberId => !oldMembers.has(memberId));
     
     if (newlyAddedMembers.length > 0) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+        if (currentUser) {
             const notifications = newlyAddedMembers.map((memberId: string) => ({
                 user_id: memberId,
-                actor_id: user.id,
+                actor_id: currentUser.id,
                 project_id: id,
                 type: NotificationType.ASSIGNMENT,
             }));
@@ -207,24 +242,39 @@ export const updateProject = async (projectData: Project): Promise<Project> => {
         }
     }
     
-    return { ...data, history: [], comments_count: comments_count };
+    return { ...data, history: [], comments_count: comments_count, tasks_count: tasks_count };
 };
 
-export const deleteProject = async (projectId: string): Promise<void> => {
+export const deleteProject = async (projectId: string, currentUser: User, userDepartments: UserDepartment[]): Promise<void> => {
+    // Fetch project to check its department for permission validation
+    const { data: project, error: findProjectError } = await supabase.from('projects').select('department_id').eq('id', projectId).single();
+    if (findProjectError) throw findProjectError;
+
+    // Frontend permission check
+    const canDelete = currentUser.role === UserRole.ADMIN || userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === project.department_id);
+    if (!canDelete) {
+        throw new Error("No tienes permiso para eliminar este proyecto.");
+    }
+
     // Delete all associated data first to maintain integrity
     const deleteComments = supabase.from('comments').delete().eq('project_id', projectId);
     const deleteHistory = supabase.from('project_history').delete().eq('project_id', projectId);
     const deleteNotifications = supabase.from('notifications').delete().eq('project_id', projectId);
+    // Also delete tasks
+    const deleteTasks = supabase.from('tasks').delete().eq('project_id', projectId);
 
-    const [commentsResult, historyResult, notificationsResult] = await Promise.all([
+
+    const [commentsResult, historyResult, notificationsResult, tasksResult] = await Promise.all([
         deleteComments,
         deleteHistory,
-        deleteNotifications
+        deleteNotifications,
+        deleteTasks
     ]);
 
     if (commentsResult.error) throw commentsResult.error;
     if (historyResult.error) throw historyResult.error;
     if (notificationsResult.error) throw notificationsResult.error;
+    if (tasksResult.error) throw tasksResult.error;
 
     // Finally, delete the project itself
     const { error: projectError } = await supabase.from('projects').delete().eq('id', projectId);
@@ -264,6 +314,32 @@ export const addComment = async (projectId: string, content: string, userId: str
     }
     return data;
 };
+
+// --- TASK FUNCTIONS ---
+export const fetchTasks = async (projectId: string): Promise<Task[]> => {
+    const { data, error } = await supabase.from('tasks').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
+    if (error) throw error;
+    return data;
+};
+
+export const addTask = async (taskData: Omit<Task, 'id' | 'created_at'>): Promise<Task> => {
+    const { data, error } = await supabase.from('tasks').insert(taskData).select().single();
+    if (error) throw error;
+    return data;
+};
+
+export const updateTask = async (taskId: string, updateData: Partial<Omit<Task, 'id'>>): Promise<Task> => {
+    const { data, error } = await supabase.from('tasks').update(updateData).eq('id', taskId).select().single();
+    if (error) throw error;
+    return data;
+};
+
+export const deleteTask = async (taskId: string): Promise<void> => {
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+    if (error) throw error;
+};
+// --------------------
+
 
 export const updateUser = async (userData: User): Promise<User> => {
     const { id, ...updateData } = userData;
@@ -320,28 +396,43 @@ export const deleteUser = async (userId: string): Promise<void> => {
     if (error) throw error;
 };
 
-export const addDepartment = async (deptData: Omit<Department, 'id'>): Promise<Department> => {
+export const addDepartment = async (deptData: Omit<Department, 'id'>, currentUser: User): Promise<Department> => {
+    if (currentUser.role !== UserRole.ADMIN) {
+        throw new Error("Solo los administradores pueden crear departamentos.");
+    }
     const payload = {
         ...deptData,
-        coordinator: deptData.coordinator === '' ? null : deptData.coordinator,
+        coordinator_id: deptData.coordinator_id === '' ? null : deptData.coordinator_id,
     };
-    const { data, error } = await supabase.from('departments').insert(payload).select('id, name, description, coordinator').single();
+    const { data, error } = await supabase.from('departments').insert(payload).select().single();
     if (error) throw error;
     return data;
 };
 
-export const updateDepartment = async (deptData: Department): Promise<Department> => {
-    const { id, ...updateData } = deptData;
-    const payload = {
-        ...updateData,
-        coordinator: updateData.coordinator === '' ? null : updateData.coordinator,
+export const updateDepartment = async (deptData: Department, currentUser: User): Promise<Department> => {
+    if (currentUser.role !== UserRole.ADMIN) {
+        throw new Error("Solo los administradores pueden editar departamentos.");
+    }
+    const { id } = deptData;
+    
+    // Create a clean payload with only the columns that exist in the 'departments' table.
+    // This prevents errors from extra properties added in the frontend for display (e.g., coordinator object, memberCount).
+    const payload: Partial<Omit<Department, 'id'>> = {
+        name: deptData.name,
+        description: deptData.description,
+        // Ensure coordinator_id is set to null if it's an empty string.
+        coordinator_id: deptData.coordinator_id === '' ? null : deptData.coordinator_id,
     };
-    const { data, error } = await supabase.from('departments').update(payload).eq('id', id).select('id, name, description, coordinator').single();
+    
+    const { data, error } = await supabase.from('departments').update(payload).eq('id', id).select().single();
     if (error) throw error;
     return data;
 };
 
-export const deleteDepartment = async (deptId: string): Promise<void> => {
+export const deleteDepartment = async (deptId: string, currentUser: User): Promise<void> => {
+    if (currentUser.role !== UserRole.ADMIN) {
+        throw new Error("Solo los administradores pueden eliminar departamentos.");
+    }
     // Check if any projects are associated with this department
     const { count, error: countError } = await supabase
         .from('projects')
@@ -361,7 +452,10 @@ export const deleteDepartment = async (deptId: string): Promise<void> => {
     if (error) throw error;
 };
 
-export const updateDepartmentMembers = async (departmentId: string, memberIds: string[]): Promise<void> => {
+export const updateDepartmentMembers = async (departmentId: string, memberIds: string[], currentUser: User): Promise<void> => {
+    if (currentUser.role !== UserRole.ADMIN) {
+        throw new Error("Solo los administradores pueden gestionar miembros de departamento.");
+    }
     // Remove existing members for this department
     const { error: deleteError } = await supabase.from('user_departments').delete().eq('department_id', departmentId);
     if (deleteError) throw deleteError;

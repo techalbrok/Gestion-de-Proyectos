@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useUI } from '../../hooks/useUI';
 import { SunIcon, MoonIcon } from '../icons/Icons';
 
 const ThemeToggle: React.FC = () => {
-  const { theme, toggleTheme } = useAppContext();
+  const { theme, toggleTheme } = useUI();
 
   return (
     <button

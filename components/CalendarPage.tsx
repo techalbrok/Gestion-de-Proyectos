@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import { Project } from '../types';
 import { PRIORITY_CONFIG } from '../constants';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons/Icons';
 import ProjectModal from './ProjectModal';
 import Button from './ui/Button';
+import { useData } from '../hooks/useData';
 
 const CalendarPage: React.FC = () => {
-  const { projects } = useAppContext();
+  const { projects } = useData();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

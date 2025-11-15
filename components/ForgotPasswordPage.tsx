@@ -1,31 +1,29 @@
-
 import React, { useState } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import { LoadingSpinner, CheckCircleIcon } from './icons/Icons';
 import { forgotPasswordSchema } from '../utils/validationSchemas';
+import { useZodForm } from '../hooks/useZodForm';
+import AuthHeader from './ui/AuthHeader';
+import { useAuth } from '../hooks/useAuth';
 
 const ForgotPasswordPage: React.FC = () => {
-    const { requestPasswordReset, setAuthView } = useAppContext();
-    const [email, setEmail] = useState('');
+    const { requestPasswordReset, setAuthView } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    
+    const { formData, errors, handleChange, validate } = useZodForm(forgotPasswordSchema, {
+        email: '',
+    });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        const validationResult = forgotPasswordSchema.safeParse({ email });
-        if (!validationResult.success) {
-            setError(validationResult.error.flatten().fieldErrors.email?.[0] || null);
-            return;
-        }
-        setError(null);
+        if(!validate()) return;
         
         setIsLoading(true);
         try {
-            await requestPasswordReset(email);
+            await requestPasswordReset(formData.email);
             setIsSubmitted(true);
         } catch (err: any) {
             // Error is handled by toast in context
@@ -37,13 +35,8 @@ const ForgotPasswordPage: React.FC = () => {
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-dark-bg">
             <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md dark:bg-dark-card">
-                <div className="text-center">
-                    <img src="/images/logo_albrok_rojo_transp.png" alt="Albroxfera Logo" className="w-40 mx-auto mb-4 block dark:hidden" />
-                    <img src="/images/logo_albrok_blanco_transp.png" alt="Albroxfera Logo" className="w-40 mx-auto mb-4 hidden dark:block" />
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
-                        Recuperar Contraseña
-                    </h1>
-                </div>
+                <AuthHeader title="Recuperar Contraseña" />
+                
                 {isSubmitted ? (
                     <div className="text-center space-y-4">
                         <CheckCircleIcon className="w-16 h-16 mx-auto text-green-500" />
@@ -64,10 +57,10 @@ const ForgotPasswordPage: React.FC = () => {
                                 label="Correo Electrónico"
                                 name="email"
                                 type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                value={formData.email}
+                                onChange={handleChange}
                                 placeholder="tu@email.com"
-                                error={error}
+                                error={errors.email}
                             />
                             
                             <div>

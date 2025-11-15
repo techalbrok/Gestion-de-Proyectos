@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Project } from '../types';
-import { useAppContext } from '../hooks/useAppContext';
 import { PRIORITY_CONFIG } from '../constants';
-import { ChatBubbleLeftRightIcon, CalendarDaysIcon, PencilIcon } from './icons/Icons';
+import { ChatBubbleLeftRightIcon, CalendarDaysIcon, PencilIcon, CheckCircleIcon } from './icons/Icons';
 import Avatar from './ui/Avatar';
+import { useData } from '../hooks/useData';
 
 interface ProjectCardProps {
   project: Project;
@@ -16,7 +15,7 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDragStart, onClick, canEdit, isDragging, onDragEnd }) => {
-  const { users, departments } = useAppContext();
+  const { users, departments } = useData();
   const department = departments.find(d => d.id === project.department_id);
   const priorityConfig = PRIORITY_CONFIG[project.priority];
   const projectMembers = users.filter(user => project.members.includes(user.id));
@@ -64,6 +63,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDragStart, onClick
                <span>{new Date(project.due_date).toLocaleDateString()}</span>
              </div>
            )}
+           <div className="flex items-center">
+            <CheckCircleIcon className="w-4 h-4 mr-1" />
+            <span>{project.tasks_count || 0}</span>
+          </div>
           <div className="flex items-center">
             <ChatBubbleLeftRightIcon className="w-4 h-4 mr-1" />
             <span>{project.comments_count || 0}</span>

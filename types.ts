@@ -36,7 +36,7 @@ export interface Department {
   id:string;
   name: string;
   description?: string;
-  coordinator?: string;
+  coordinator_id?: string;
 }
 
 export interface UserDepartment {
@@ -49,6 +49,17 @@ export interface Comment {
   project_id: string;
   user_id: string;
   content: string;
+  created_at: string;
+}
+
+export interface Task {
+  id: string;
+  project_id: string;
+  title: string;
+  is_completed: boolean;
+  assigned_to?: string;
+  due_date?: string | null;
+  created_by: string;
   created_at: string;
 }
 
@@ -65,6 +76,7 @@ export interface Project {
   members: string[]; // array of user ids
   history: ProjectHistory[];
   comments_count: number;
+  tasks_count: number;
 }
 
 export interface ProjectHistory {
