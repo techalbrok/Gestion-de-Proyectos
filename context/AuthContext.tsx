@@ -58,7 +58,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           } catch (error) {
             console.error("Error loading profile:", error);
             if (mounted) {
-              addToast("Error al cargar tu perfil.", 'error');
               await supabase.auth.signOut();
               setSession(null);
               setCurrentUser(null);
@@ -86,30 +85,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      (async () => {
+        if (!mounted) return;
 
-      if (session) {
-        setSession(session);
-        try {
-          const profile = await api.fetchUserProfile(session.user.id);
-          if (mounted) {
-            setCurrentUser(profile);
-            setIsAuthenticated(true);
+        if (session) {
+          setSession(session);
+          try {
+            const profile = await api.fetchUserProfile(session.user.id);
+            if (mounted) {
+              setCurrentUser(profile);
+              setIsAuthenticated(true);
+            }
+          } catch (error) {
+            console.error("Error loading profile on auth change:", error);
+            if (mounted) {
+              setCurrentUser(null);
+              setIsAuthenticated(false);
+            }
           }
-        } catch (error) {
-          console.error("Error loading profile on auth change:", error);
-          if (mounted) {
-            addToast("Error al cargar tu perfil.", 'error');
-            setCurrentUser(null);
-            setIsAuthenticated(false);
-          }
+        } else {
+          setSession(null);
+          setCurrentUser(null);
+          setIsAuthenticated(false);
         }
-      } else {
-        setSession(null);
-        setCurrentUser(null);
-        setIsAuthenticated(false);
-      }
+      })();
     });
 
     return () => {
