@@ -1,44 +1,5 @@
 import React from 'react';
-import {
-  Plus,
-  Bell,
-  Search,
-  ChevronDown,
-  ClipboardList,
-  Users,
-  Building2,
-  PieChart,
-  Settings,
-  HelpCircle,
-  Shield,
-  MessageSquare,
-  Calendar,
-  X,
-  Send,
-  Clock,
-  Edit,
-  Trash2,
-  Loader2,
-  CheckCircle,
-  AlertTriangle,
-  UserPlus,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  UserCircle,
-  LogOut,
-  Camera,
-  Archive,
-  FilePlus,
-  Sun,
-  Moon,
-  Menu,
-  Paperclip,
-  Download,
-  LayoutGrid,
-  List,
-  Copy
-} from 'lucide-react';
+import { Plus, Bell, Search, ChevronDown, ClipboardList, Users, Building2, ChartPie as PieChart, Settings, Circle as HelpCircle, Shield, MessageSquare, Calendar, X, Send, Clock, CreditCard as Edit, Trash2, Loader as Loader2, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, UserPlus, ChevronLeft, ChevronRight, ListFilter as Filter, CircleUser as UserCircle, LogOut, Camera, Archive, FilePlus, Sun, Moon, Menu, Paperclip, Download, LayoutGrid, List, Copy } from 'lucide-react';
 
 type IconProps = React.ComponentProps<typeof Plus>;
 
