@@ -171,6 +171,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const logout = useCallback(async () => {
+    // If user is not authenticated, just update UI state
+    if (!isAuthenticated) {
+      setAuthView('signin');
+      addToast('Sesión cerrada correctamente.', 'success');
+      return;
+    }
+
     try {
       await api.logout();
       setAuthView('signin');
@@ -178,13 +185,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error: any) {
       setAuthView('signin');
       if (error.message && !error.message.includes('session_not_found')) {
-        console.error('Error during logout:', error);
         addToast('Error al cerrar sesión.', 'error');
+        console.error('Error during logout:', error);
       } else {
         addToast('Sesión cerrada correctamente.', 'success');
       }
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const value = useMemo(() => ({
     session,
