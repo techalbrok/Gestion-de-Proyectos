@@ -39,10 +39,13 @@ export const requestPasswordReset = async (email: string) => {
 
 
 export const fetchUserProfile = async (userId: string): Promise<User> => {
-    const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
-    if (error || !data) {
-        console.error('Error fetching user profile. User may not have a public profile entry.', error);
-        throw error || new Error('User profile not found.');
+    const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle();
+    if (error) {
+        console.error('Error fetching user profile:', error);
+        throw error;
+    }
+    if (!data) {
+        throw new Error('User profile not found.');
     }
     return data;
 }
@@ -142,9 +145,12 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
 export const updateProjectStage = async (projectId: string, newStage: ProjectStage, currentUser: User, userDepartments: UserDepartment[]): Promise<Project> => {
     const { data: projectBeforeUpdate, error: findError } = await supabase.from('projects').select('stage, members, department_id').eq('id', projectId).single();
     if(findError) throw findError;
-    
+    if(!projectBeforeUpdate) throw new Error("Proyecto no encontrado.");
+
     // Frontend permission check
-    const canEdit = currentUser.role === UserRole.ADMIN || userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === projectBeforeUpdate.department_id);
+    const canEdit = currentUser.role === UserRole.ADMIN ||
+                    (userDepartments && userDepartments.length > 0 &&
+                     userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === projectBeforeUpdate.department_id));
     if (!canEdit) {
         throw new Error("No tienes permiso para editar este proyecto.");
     }
@@ -212,15 +218,18 @@ export const addProject = async (projectData: Omit<Project, 'id' | 'created_by' 
 
 export const updateProject = async (projectData: Project, currentUser: User, userDepartments: UserDepartment[]): Promise<Project> => {
     // Frontend permission check
-    const canEdit = currentUser.role === UserRole.ADMIN || userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === projectData.department_id);
+    const canEdit = currentUser.role === UserRole.ADMIN ||
+                    (userDepartments && userDepartments.length > 0 &&
+                     userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === projectData.department_id));
     if (!canEdit) {
         throw new Error("No tienes permiso para editar este proyecto.");
     }
-    
+
     const { id, history, comments_count, tasks_count, ...updateData } = projectData;
-    
+
     const { data: projectBeforeUpdate, error: findError } = await supabase.from('projects').select('members').eq('id', id).single();
     if(findError) throw findError;
+    if(!projectBeforeUpdate) throw new Error("Proyecto no encontrado.");
 
     const { data, error } = await supabase.from('projects').update(updateData).eq('id', id).select().single();
     if (error) throw error;
@@ -249,9 +258,12 @@ export const deleteProject = async (projectId: string, currentUser: User, userDe
     // Fetch project to check its department for permission validation
     const { data: project, error: findProjectError } = await supabase.from('projects').select('department_id').eq('id', projectId).single();
     if (findProjectError) throw findProjectError;
+    if (!project) throw new Error("Proyecto no encontrado.");
 
     // Frontend permission check
-    const canDelete = currentUser.role === UserRole.ADMIN || userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === project.department_id);
+    const canDelete = currentUser.role === UserRole.ADMIN ||
+                      (userDepartments && userDepartments.length > 0 &&
+                       userDepartments.some(ud => ud.user_id === currentUser.id && ud.department_id === project.department_id));
     if (!canDelete) {
         throw new Error("No tienes permiso para eliminar este proyecto.");
     }

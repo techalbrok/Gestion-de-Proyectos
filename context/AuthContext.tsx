@@ -119,9 +119,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [addToast]);
 
   const logout = useCallback(async () => {
-    await api.logout();
-    setAuthView('signin');
-    addToast('Sesión cerrada correctamente.', 'success');
+    try {
+      await api.logout();
+      setAuthView('signin');
+      addToast('Sesión cerrada correctamente.', 'success');
+    } catch (error: any) {
+      console.error('Error during logout:', error);
+      addToast('Error al cerrar sesión.', 'error');
+    }
   }, [addToast]);
 
   const value = useMemo(() => ({

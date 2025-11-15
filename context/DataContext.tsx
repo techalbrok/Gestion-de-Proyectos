@@ -106,8 +106,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return [...prev, ...newProjects];
         });
         setArchivedProjectsLoaded(true);
-    } catch (error) {
-        addToast('Error al cargar proyectos archivados.', 'error');
+    } catch (error: any) {
+        console.error('Error loading archived projects:', error);
+        addToast(error.message || 'Error al cargar proyectos archivados.', 'error');
     }
   }, [addToast, archivedProjectsLoaded]);
 
@@ -124,9 +125,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 filter: `user_id=eq.${currentUser.id}`
             },
             async () => {
-                const newNotifications = await api.fetchNotifications();
-                setNotifications(newNotifications);
-                addToast('Tienes una nueva notificación', 'success');
+                try {
+                    const newNotifications = await api.fetchNotifications();
+                    setNotifications(newNotifications);
+                    addToast('Tienes una nueva notificación', 'success');
+                } catch (error: any) {
+                    console.error('Error fetching new notifications:', error);
+                }
             }
         )
         .subscribe();
@@ -157,8 +162,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const newProject = await api.addProject(projectData, currentUser.id);
       setProjects(prev => [...prev, newProject]);
       addToast('Proyecto creado exitosamente.', 'success');
-    } catch(e) {
-      addToast('Error al crear el proyecto.', 'error');
+    } catch(e: any) {
+      console.error('Error creating project:', e);
+      addToast(e.message || 'Error al crear el proyecto.', 'error');
+      throw e;
     }
   }, [currentUser, addToast]);
   
@@ -169,7 +176,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
       addToast('Proyecto actualizado correctamente.', 'success');
     } catch(e: any) {
+      console.error('Error updating project:', e);
       addToast(e.message || 'Error al actualizar el proyecto.', 'error');
+      throw e;
     }
   }, [currentUser, userDepartments, addToast]);
 
@@ -193,8 +202,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setCurrentUser(updatedUser);
       }
       addToast('Usuario actualizado.', 'success');
-    } catch (error) {
-      addToast('Error al actualizar el usuario.', 'error');
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      addToast(error.message || 'Error al actualizar el usuario.', 'error');
       throw error;
     }
   }, [addToast, currentUser, setCurrentUser]);
@@ -221,8 +231,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await api.deleteUser(userId);
       setUsers(prev => prev.filter(u => u.id !== userId));
       addToast('Usuario eliminado correctamente.', 'success');
-    } catch (error) {
-      addToast('Error al eliminar el usuario.', 'error');
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      addToast(error.message || 'Error al eliminar el usuario.', 'error');
+      throw error;
     }
   }, [addToast]);
 
@@ -233,8 +245,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setDepartments(prev => [...prev, newDept]);
       addToast('Departamento creado.', 'success');
       return newDept;
-    } catch(e) {
-      addToast('Error al crear el departamento.', 'error');
+    } catch(e: any) {
+      console.error('Error creating department:', e);
+      addToast(e.message || 'Error al crear el departamento.', 'error');
       throw e;
     }
   }, [addToast, currentUser]);
@@ -246,7 +259,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setDepartments(prev => prev.map(d => d.id === updatedDept.id ? updatedDept : d));
       addToast('Departamento actualizado.', 'success');
     } catch(e: any) {
+      console.error('Error updating department:', e);
       addToast(e.message || 'Error al actualizar el departamento.', 'error');
+      throw e;
     }
   }, [addToast, currentUser]);
 
@@ -258,7 +273,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUserDepartments(prev => prev.filter(ud => ud.department_id !== deptId));
       addToast('Departamento eliminado.', 'success');
     } catch (error: any) {
+      console.error('Error deleting department:', error);
       addToast(error.message || 'Error al eliminar el departamento. Asegúrate de que no tenga proyectos asignados.', 'error');
+      throw error;
     }
   }, [addToast, currentUser]);
 
@@ -270,7 +287,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUserDepartments(updatedUserDepartments);
       addToast('Miembros del departamento actualizados.', 'success');
     } catch(error: any) {
+      console.error('Error updating department members:', error);
       addToast(error.message || 'Error al actualizar los miembros.', 'error');
+      throw error;
     }
   }, [addToast, currentUser]);
 
@@ -283,24 +302,30 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const newComment = await api.addComment(projectId, content, currentUser.id);
       // Increment comment count locally for instant UI update
-      setProjects(prevProjects => 
-        prevProjects.map(p => 
-          p.id === projectId 
+      setProjects(prevProjects =>
+        prevProjects.map(p =>
+          p.id === projectId
             ? { ...p, comments_count: (p.comments_count || 0) + 1 }
             : p
         )
       );
       return newComment;
-    } catch (error) {
-      addToast('No se pudo agregar el comentario.', 'error');
+    } catch (error: any) {
+      console.error('Error adding comment:', error);
+      addToast(error.message || 'No se pudo agregar el comentario.', 'error');
       throw error;
     }
   }, [currentUser, addToast]);
 
   const markAllNotificationsAsRead = useCallback(async () => {
-    await api.markAllAsRead();
-    setNotifications(prev => prev.map(n => ({...n, is_read: true})));
-  }, []);
+    try {
+      await api.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({...n, is_read: true})));
+    } catch (error: any) {
+      console.error('Error marking notifications as read:', error);
+      addToast(error.message || 'Error al marcar notificaciones como leídas.', 'error');
+    }
+  }, [addToast]);
 
   // --- Task Functions ---
   const getTasks = useCallback(async (projectId: string) => {
@@ -313,17 +338,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const newTaskPayload = { ...taskData, project_id: projectId, created_by: currentUser.id };
           const newTask = await api.addTask(newTaskPayload as Omit<Task, 'id' | 'created_at'>);
           // Increment task count locally
-          setProjects(prevProjects => 
-              prevProjects.map(p => 
-                p.id === projectId 
+          setProjects(prevProjects =>
+              prevProjects.map(p =>
+                p.id === projectId
                   ? { ...p, tasks_count: (p.tasks_count || 0) + 1 }
                   : p
               )
           );
           addToast('Tarea añadida.', 'success');
           return newTask;
-      } catch (error) {
-          addToast('No se pudo añadir la tarea.', 'error');
+      } catch (error: any) {
+          console.error('Error adding task:', error);
+          addToast(error.message || 'No se pudo añadir la tarea.', 'error');
           throw error;
       }
   }, [currentUser, addToast]);
@@ -332,8 +358,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
           await api.updateTask(taskId, updateData);
           // No toast here to keep UI quiet for simple toggles.
-      } catch (error) {
-          addToast('No se pudo actualizar la tarea.', 'error');
+      } catch (error: any) {
+          console.error('Error updating task:', error);
+          addToast(error.message || 'No se pudo actualizar la tarea.', 'error');
           throw error;
       }
   }, [addToast]);
@@ -342,16 +369,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
           await api.deleteTask(taskId);
           // Decrement task count locally
-          setProjects(prevProjects => 
-              prevProjects.map(p => 
-                p.id === projectId 
+          setProjects(prevProjects =>
+              prevProjects.map(p =>
+                p.id === projectId
                   ? { ...p, tasks_count: Math.max(0, (p.tasks_count || 1) - 1) }
                   : p
               )
           );
           addToast('Tarea eliminada.', 'success');
-      } catch (error) {
-          addToast('No se pudo eliminar la tarea.', 'error');
+      } catch (error: any) {
+          console.error('Error deleting task:', error);
+          addToast(error.message || 'No se pudo eliminar la tarea.', 'error');
           throw error;
       }
   }, [addToast]);
