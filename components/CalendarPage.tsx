@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Project } from '../types';
 import { PRIORITY_CONFIG } from '../constants';
-import { ChevronLeftIcon, ChevronRightIcon } from './icons/Icons';
+import { ChevronLeftIcon, ChevronRightIcon, CalendarDaysIcon } from './icons/Icons';
 import ProjectModal from './ProjectModal';
 import Button from './ui/Button';
 import { useData } from '../hooks/useData';
