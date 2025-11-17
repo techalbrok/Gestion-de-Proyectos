@@ -3,7 +3,7 @@ import { Project } from '../types';
 import Avatar from './ui/Avatar';
 import Button from './ui/Button';
 import ProjectModal from './ProjectModal';
-import { ChevronLeftIcon, ClipboardListIcon, CheckCircleIcon, Cog6ToothIcon, UserGroupIcon, PlusIcon, DownloadIcon } from './icons/Icons';
+import { ChevronLeftIcon, ClipboardListIcon, CheckCircleIcon, Cog6ToothIcon, UserGroupIcon, PlusIcon, DownloadIcon, BuildingLibraryIcon } from './icons/Icons';
 import { STAGE_CONFIG, PRIORITY_CONFIG } from '../constants';
 import StatCard from './ui/StatCard';
 import { useData } from '../hooks/useData';
